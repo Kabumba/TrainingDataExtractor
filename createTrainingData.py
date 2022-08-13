@@ -9,7 +9,8 @@ import pickle
 import bz2
 import sys
 
-def convert_replay_to_game_frames(inputName,JSONpath,save_json = True):
+
+def convert_replay_to_game_frames(inputName, JSONpath, save_json=True):
     _json = carball.decompile_replay(inputName)
 
     game = Game()
@@ -20,15 +21,16 @@ def convert_replay_to_game_frames(inputName,JSONpath,save_json = True):
 
     json_object = analysis_manager.get_json_data()
     with open(JSONpath, 'w+') as j_file:
-        json.dump(json_object,j_file)
+        json.dump(json_object, j_file)
 
     result = convert_json_to_game_frames(JSONpath)
     if not save_json:
         os.remove(JSONpath)
     return result
-    #return None
+    # return None
 
-def duplicateFrameCheck(frame1,frame2):
+
+def duplicateFrameCheck(frame1, frame2):
     if frame1["GameState"]["ball"]["position"] != frame2["GameState"]["ball"]["position"]:
         return False
     if frame1["GameState"]["ball"]["velocity"] != frame2["GameState"]["ball"]["velocity"]:
@@ -46,17 +48,20 @@ def duplicateFrameCheck(frame1,frame2):
             return False
     return True
 
+
 def velocity_scaler(vel):
     if vel != 0:
-        vel = vel/10
+        vel = vel / 10
     return vel
 
-def angular_vecloty_scaler(a_vel):
+
+def angular_velocity_scaler(a_vel):
     if a_vel != 0:
-        a_vel = a_vel/1000
+        a_vel = a_vel / 1000
     return a_vel
 
-def creating_data(replay_location="",json_path=""):
+
+def creating_data(replay_location="", json_path=""):
     _json = carball.decompile_replay(replay_location)
 
     game = Game()
@@ -103,8 +108,9 @@ def creating_data(replay_location="",json_path=""):
 
     return frames
 
+
 def convert_json_to_game_frames(filename):
-    with open(filename,encoding='utf-8', errors='ignore') as json_file:
+    with open(filename, encoding='utf-8', errors='ignore') as json_file:
         _json = json.load(json_file)
 
     game = Game()
@@ -112,8 +118,6 @@ def convert_json_to_game_frames(filename):
 
     analysis = AnalysisManager(game)
     analysis.create_analysis()
-
-
 
     x = ControlsCreator()
     x.get_controls(game)
@@ -128,27 +132,31 @@ def convert_json_to_game_frames(filename):
         frame["GameState"]["seconds_remaining"] = NaN_fixer(row["game"]["seconds_remaining"])
         frame["GameState"]["deltatime"] = NaN_fixer(row["game"]["delta"])
         frame["GameState"]["ball"] = {}
-        frame["GameState"]["ball"]["position"] = [NaN_fixer(row["ball"]["pos_x"]),NaN_fixer(row["ball"]["pos_y"]),NaN_fixer(row["ball"]["pos_z"])]
-        frame["GameState"]["ball"]["velocity"] = [velocity_scaler(NaN_fixer(row["ball"]["vel_x"])),velocity_scaler(NaN_fixer(row["ball"]["vel_y"])),velocity_scaler(NaN_fixer(row["ball"]["vel_z"]))]
-        frame["GameState"]["ball"]["rotation"] = [NaN_fixer(row["ball"]["rot_x"]),NaN_fixer(row["ball"]["rot_y"]),NaN_fixer(row["ball"]["rot_z"])]
+        frame["GameState"]["ball"]["position"] = [NaN_fixer(row["ball"]["pos_x"]), NaN_fixer(row["ball"]["pos_y"]),
+                                                  NaN_fixer(row["ball"]["pos_z"])]
+        frame["GameState"]["ball"]["velocity"] = [velocity_scaler(NaN_fixer(row["ball"]["vel_x"])),
+                                                  velocity_scaler(NaN_fixer(row["ball"]["vel_y"])),
+                                                  velocity_scaler(NaN_fixer(row["ball"]["vel_z"]))]
+        frame["GameState"]["ball"]["rotation"] = [NaN_fixer(row["ball"]["rot_x"]), NaN_fixer(row["ball"]["rot_y"]),
+                                                  NaN_fixer(row["ball"]["rot_z"])]
         frame["PlayerData"] = []
         for i in range(len(game.players)):
-            frame["PlayerData"].append(getPlayerFrame(game.players[i],i,col,row))
+            frame["PlayerData"].append(getPlayerFrame(game.players[i], i, col, row))
 
         if previous_frame != None:
             if duplicateFrameCheck(frame, previous_frame):
-                total+=1
-                duplicates+=1
+                total += 1
+                duplicates += 1
                 continue
 
         previous_frame = frame
         frames.append(frame)
-        total +=1
+        total += 1
 
     return frames
 
 
-def getPlayerFrame(player,playerIndex,frameIndex,row):
+def getPlayerFrame(player, playerIndex, frameIndex, row):
     controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "handbrake"]
     playerData = {}
     playerData["index"] = playerIndex
@@ -158,18 +166,24 @@ def getPlayerFrame(player,playerIndex,frameIndex,row):
     else:
         playerData["team"] = 0
 
-    playerData["position"] = [NaN_fixer(row[player.name]["pos_x"]),NaN_fixer(row[player.name]["pos_y"]),NaN_fixer(row[player.name]["pos_z"])]
-    playerData["rotation"] = [NaN_fixer(row[player.name]["rot_x"]), NaN_fixer(row[player.name]["rot_y"]), NaN_fixer(row[player.name]["rot_z"])]
-    playerData["velocity"] = [velocity_scaler(NaN_fixer(row[player.name]["vel_x"])), velocity_scaler(NaN_fixer(row[player.name]["vel_y"])), velocity_scaler(NaN_fixer(row[player.name]["vel_z"]))]
-    playerData["angular_velocity"] = [angular_vecloty_scaler(NaN_fixer(row[player.name]["ang_vel_x"])), angular_vecloty_scaler(NaN_fixer(row[player.name]["ang_vel_y"])), angular_vecloty_scaler(NaN_fixer(row[player.name]["ang_vel_z"]))]
+    playerData["position"] = [NaN_fixer(row[player.name]["pos_x"]), NaN_fixer(row[player.name]["pos_y"]),
+                              NaN_fixer(row[player.name]["pos_z"])]
+    playerData["rotation"] = [NaN_fixer(row[player.name]["rot_x"]), NaN_fixer(row[player.name]["rot_y"]),
+                              NaN_fixer(row[player.name]["rot_z"])]
+    playerData["velocity"] = [velocity_scaler(NaN_fixer(row[player.name]["vel_x"])),
+                              velocity_scaler(NaN_fixer(row[player.name]["vel_y"])),
+                              velocity_scaler(NaN_fixer(row[player.name]["vel_z"]))]
+    playerData["angular_velocity"] = [angular_velocity_scaler(NaN_fixer(row[player.name]["ang_vel_x"])),
+                                      angular_velocity_scaler(NaN_fixer(row[player.name]["ang_vel_y"])),
+                                      angular_velocity_scaler(NaN_fixer(row[player.name]["ang_vel_z"]))]
     playerData["boosting"] = row[player.name]["boost_active"]
     boost = NaN_fixer(row[player.name]["boost"])
     if boost > 0:
-        boost = math.ceil((boost/255)*100)
+        boost = math.ceil((boost / 255) * 100)
     playerData["boost_level"] = int(boost)
 
     for c in controls:
-        temp = NaN_fixer(player.controls.loc[frameIndex,c])
+        temp = NaN_fixer(player.controls.loc[frameIndex, c])
         if temp == None:
             temp = False
         playerData[c] = temp
@@ -177,7 +191,7 @@ def getPlayerFrame(player,playerIndex,frameIndex,row):
     return playerData
 
 
-def createAndSaveReplayTrainingDataFromJSON(replayPath, outputFileName = None):
+def createAndSaveReplayTrainingDataFromJSON(replayPath, outputFileName=None):
     replayData = convert_json_to_game_frames(replayPath)
 
     if outputFileName != None:
@@ -186,12 +200,13 @@ def createAndSaveReplayTrainingDataFromJSON(replayPath, outputFileName = None):
         outputName = replayPath + ".pbz2"
 
     with bz2.BZ2File(outputName, 'w') as f:
-        pickle.dump(replayData , f)
+        pickle.dump(replayData, f)
 
-def createAndSaveReplayTrainingData(replayPath,outputName,jsonPath,save_json = True):
-    replayData = convert_replay_to_game_frames(replayPath,jsonPath,save_json = save_json)
+
+def createAndSaveReplayTrainingData(replayPath, outputName, jsonPath, save_json=True):
+    replayData = convert_replay_to_game_frames(replayPath, jsonPath, save_json=save_json)
     with bz2.BZ2File(outputName, 'w') as f:
-        pickle.dump(replayData , f)
+        pickle.dump(replayData, f)
 
 
 def loadSavedTrainingData(dataPath):
@@ -201,11 +216,22 @@ def loadSavedTrainingData(dataPath):
     return result
 
 
-def createDataFromReplay(filepath,outputPath,jsonPath,save_json = True):
-    carball.decompile_replay(filepath,output_path=jsonPath,overwrite=True)
-    createAndSaveReplayTrainingDataFromJSON(jsonPath,outputFileName= outputPath)
+def createDataFromReplay(filepath, outputPath, jsonPath, save_json=True):
+    print("3.1")
+    print(filepath)
+    print(outputPath)
+    print(jsonPath)
+    jsonData = carball.decompile_replay(filepath)#, output_path=outputPath, overwrite=True)
+    with open(jsonPath, "w") as json_file:
+        json.dump(jsonData, json_file)
+    print("3.2")
+    createAndSaveReplayTrainingDataFromJSON(jsonPath, outputFileName=outputPath)
+    print("3.3")
     if not save_json:
+        print("3.4")
         os.remove(jsonPath)
+        print("3.5")
+
 
 def NaN_fixer(value):
     if value != value:
@@ -213,5 +239,3 @@ def NaN_fixer(value):
 
     else:
         return value
-
-
