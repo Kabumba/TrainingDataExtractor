@@ -217,20 +217,12 @@ def loadSavedTrainingData(dataPath):
 
 
 def createDataFromReplay(filepath, outputPath, jsonPath, save_json=True):
-    print("3.1")
-    print(filepath)
-    print(outputPath)
-    print(jsonPath)
     jsonData = carball.decompile_replay(filepath)#, output_path=outputPath, overwrite=True)
     with open(jsonPath, "w") as json_file:
         json.dump(jsonData, json_file)
-    print("3.2")
     createAndSaveReplayTrainingDataFromJSON(jsonPath, outputFileName=outputPath)
-    print("3.3")
     if not save_json:
-        print("3.4")
         os.remove(jsonPath)
-        print("3.5")
 
 
 def NaN_fixer(value):
