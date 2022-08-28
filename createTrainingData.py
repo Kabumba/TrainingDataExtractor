@@ -31,14 +31,14 @@ def convert_replay_to_game_frames(inputName, JSONpath, save_json=True):
 
 
 def duplicateFrameCheck(frame1, frame2):
-    if frame1["GameState"]["ball"]["position"] != frame2["GameState"]["ball"]["position"]:
+    if frame1["GameState"]["ball"]["location"] != frame2["GameState"]["ball"]["location"]:
         return False
     if frame1["GameState"]["ball"]["velocity"] != frame2["GameState"]["ball"]["velocity"]:
         return False
     if frame1["GameState"]["ball"]["rotation"] != frame2["GameState"]["ball"]["rotation"]:
         return False
     for i in range(len(frame1["PlayerData"])):
-        if frame1["PlayerData"][i]["position"] != frame2["PlayerData"][i]["position"]:
+        if frame1["PlayerData"][i]["location"] != frame2["PlayerData"][i]["location"]:
             return False
         if frame1["PlayerData"][i]["velocity"] != frame2["PlayerData"][i]["velocity"]:
             return False
@@ -132,7 +132,7 @@ def convert_json_to_game_frames(filename):
         frame["GameState"]["seconds_remaining"] = NaN_fixer(row["game"]["seconds_remaining"])
         frame["GameState"]["deltatime"] = NaN_fixer(row["game"]["delta"])
         frame["GameState"]["ball"] = {}
-        frame["GameState"]["ball"]["position"] = [NaN_fixer(row["ball"]["pos_x"]), NaN_fixer(row["ball"]["pos_y"]),
+        frame["GameState"]["ball"]["location"] = [NaN_fixer(row["ball"]["pos_x"]), NaN_fixer(row["ball"]["pos_y"]),
                                                   NaN_fixer(row["ball"]["pos_z"])]
         frame["GameState"]["ball"]["velocity"] = [velocity_scaler(NaN_fixer(row["ball"]["vel_x"])),
                                                   velocity_scaler(NaN_fixer(row["ball"]["vel_y"])),
@@ -166,7 +166,7 @@ def getPlayerFrame(player, playerIndex, frameIndex, row):
     else:
         playerData["team"] = 0
 
-    playerData["position"] = [NaN_fixer(row[player.name]["pos_x"]), NaN_fixer(row[player.name]["pos_y"]),
+    playerData["location"] = [NaN_fixer(row[player.name]["pos_x"]), NaN_fixer(row[player.name]["pos_y"]),
                               NaN_fixer(row[player.name]["pos_z"])]
     playerData["rotation"] = [NaN_fixer(row[player.name]["rot_x"]), NaN_fixer(row[player.name]["rot_y"]),
                               NaN_fixer(row[player.name]["rot_z"])]
@@ -176,7 +176,7 @@ def getPlayerFrame(player, playerIndex, frameIndex, row):
     playerData["angular_velocity"] = [angular_velocity_scaler(NaN_fixer(row[player.name]["ang_vel_x"])),
                                       angular_velocity_scaler(NaN_fixer(row[player.name]["ang_vel_y"])),
                                       angular_velocity_scaler(NaN_fixer(row[player.name]["ang_vel_z"]))]
-    playerData["boosting"] = row[player.name]["boost_active"]
+    playerData["boost"] = row[player.name]["boost_active"]
     boost = NaN_fixer(row[player.name]["boost"])
     if boost > 0:
         boost = math.ceil((boost / 255) * 100)
