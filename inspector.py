@@ -47,10 +47,27 @@ class Inspector:
         _json = custom_carball.decompile_replay(replayName)
         game = Game()
         game.initialize(loaded_json=_json)
+        x = ControlsCreator()
+        x.get_controls(game)
 
-        analysis_manager = PerGoalAnalysis(game)
-        analysis_manager.create_analysis()
-        analysis_manager.data_frame.info(verbose=True)
+        analysis_manager = AnalysisManager(game)
+        analysis_manager.create_data()
+        #analysis_manager.data_frame.info(verbose=True)
+        df = analysis_manager.data_frame
+        last = 0
+        scope = len(game.kickoff_frames)
+        for i in range(scope):
+            start = game.kickoff_frames[i]
+            end = game.goals[i].frame_number
+            length = end-start
+            pause = start - last
+            last = end
+            #print(df.loc[start-1,"Teewurstprinz"])
+            print(df.loc[end, "game"])
+            print("Kickoff-Pause: " + str(pause))
+            print("Start: " + str(start) + " End: " + str(end) + " Length: " + str(length))
+
+
         '''
         n = 3
         print("kickoff")

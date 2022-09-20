@@ -11,6 +11,7 @@ from google.protobuf.json_format import _Printer
 from typing.io import IO
 
 from .utils.json_encoder import CarballJsonEncoder
+from ..controls.controls import ControlsCreator
 
 script_path = os.path.abspath(__file__)
 with open(os.path.join(os.path.dirname(script_path), 'PROTOBUF_VERSION'), 'r') as f:
@@ -82,6 +83,17 @@ class AnalysisManager:
         # log before we add the dataframes
         # logger.debug(self.protobuf_game)
 
+        self._store_frames(data_frame)
+
+    def create_data(self):
+        self._start_time()
+        player_map = self._get_game_metadata(self.game, self.protobuf_game)
+        self._log_time("Getting in-game frame-by-frame data...")
+        data_frame = self._initialize_data_frame(self.game)
+        self._log_time("Getting important frames (kickoff, first-touch)...")
+        kickoff_frames, first_touch_frames = self._get_kickoff_frames(self.game, self.protobuf_game, data_frame)
+        self._log_time("Setting game kickoff frames...")
+        self.game.kickoff_frames = kickoff_frames
         self._store_frames(data_frame)
 
     def write_json_out_to_file(self, file: IO):
