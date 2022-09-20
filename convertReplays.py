@@ -25,7 +25,7 @@ def convertAllReplays():
 def convertSingleReplay(replay_name):
     baseDir = "C:/Users/Frederik/Masterarbeit/Data"
     replayDir = baseDir + "/Replays"
-    dataDir = baseDir + "/TrainingData"
+    dataDir = baseDir + "/ExtractedInputsToDo"
     if replay_name + ".pbz2" not in os.listdir(dataDir):
         try:
             print("[" + getTime() + "] Converting next Replay")
@@ -53,17 +53,6 @@ def convertSingleReplay(replay_name):
 "how to load the data from a previously saved .pbz2 file"
 # gameData = createTrainingData.loadTrainingData("exampleSavedTrainingData.pbz2")
 
-def inspectData():
-    baseDir = "C:/Users/Frederik/Masterarbeit/Data"
-    replayDir = baseDir + "/Replays"
-    gameData = loadSavedTrainingData(dataDir + "/" + os.listdir(dataDir)[0])
-    print(f"This variable contains data for {len(gameData)} game frames in addition to controller input data")
-    n = 500
-    delta = 2
-    print(gameData[n]["GameState"])
-    print(gameData[n+delta]["GameState"])
-    print(gameData[n]["PlayerData"][0])
-    print(gameData[n+delta]["PlayerData"][0])
 
 def main():
     convertAllReplays()
