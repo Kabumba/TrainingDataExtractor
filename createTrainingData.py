@@ -1,17 +1,17 @@
-from carball.json_parser.game import Game
-from carball.analysis.analysis_manager import AnalysisManager
-from carball.controls.controls import ControlsCreator
+from custom_carball.json_parser.game import Game
+from custom_carball.analysis.analysis_manager import AnalysisManager
+from custom_carball.controls.controls import ControlsCreator
 import math
 import os
 import json
-import carball
+import custom_carball
 import pickle
 import bz2
 import sys
 
 
 def convert_replay_to_game_frames(inputName, JSONpath, save_json=True):
-    _json = carball.decompile_replay(inputName)
+    _json = custom_carball.decompile_replay(inputName)
 
     game = Game()
     game.initialize(loaded_json=_json)
@@ -62,7 +62,7 @@ def angular_velocity_scaler(a_vel):
 
 
 def creating_data(replay_location="", json_path=""):
-    _json = carball.decompile_replay(replay_location)
+    _json = custom_carball.decompile_replay(replay_location)
 
     game = Game()
     game.initialize(loaded_json=_json)
@@ -217,7 +217,7 @@ def loadSavedTrainingData(dataPath):
 
 
 def createDataFromReplay(filepath, outputPath, jsonPath, save_json=True):
-    jsonData = carball.decompile_replay(filepath)#, output_path=outputPath, overwrite=True)
+    jsonData = custom_carball.decompile_replay(filepath)#, output_path=outputPath, overwrite=True)
     with open(jsonPath, "w") as json_file:
         json.dump(jsonData, json_file)
     createAndSaveReplayTrainingDataFromJSON(jsonPath, outputFileName=outputPath)
