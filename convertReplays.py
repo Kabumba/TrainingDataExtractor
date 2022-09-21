@@ -42,6 +42,7 @@ def convertSingleReplay(replay_name):
 
 
 
+
 "how decompile a .replay file into .json format, save it locally(optional) returns extracted game frames data and controls"
 # extractedGameStatesAndControls = createTrainingData.convert_replay_to_game_frames("../Data/test2.replay","../Data/testExtract2.json",save_json = True)
 

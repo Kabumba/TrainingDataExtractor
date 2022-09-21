@@ -156,6 +156,7 @@ def convert_json_to_game_frames(filename):
     return frames
 
 
+
 def getPlayerFrame(player, playerIndex, frameIndex, row):
     controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "handbrake"]
     playerData = {}
