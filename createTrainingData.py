@@ -229,6 +229,5 @@ def createDataFromReplay(filepath, outputPath, jsonPath, save_json=True):
 def NaN_fixer(value):
     if value != value:
         return 0
-
     else:
         return value
