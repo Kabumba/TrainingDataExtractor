@@ -153,7 +153,7 @@ class Inspector:
                         boost
                         handbrake
         '''
-        controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "handbrake"]
+        controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "boost", "handbrake"]
         input_data = {"player_info": [], "frames": []}
         start_index = goal_data_frame.first_valid_index()
         start_time = goal_data_frame.loc[start_index, ("game", "time")]
@@ -172,7 +172,6 @@ class Inspector:
             for i in range(len(game.players)):
                 player_data = {"index": i, "inputs": {}}
                 player = game.players[i]
-                player_data["inputs"]["boost"] = row[player.name]["boost_active"]
                 for c in controls:
                     temp = NaN_fixer(player.controls.loc[frame_index, c])
                     if temp == None:
@@ -186,6 +185,27 @@ class Inspector:
 inspector = Inspector()
 # inspector.inspectData()
 # convert_replay_to_game_frames(inspector.replayDir + "/" + inspector.testReplay, inspector.baseDir + "/temp.json")
-inspector.extract_inputs_per_goal(inspector.replayDir + "/" + inspector.testReplay)
-# games = analysis.get_protobuf_data()
-# print(type(games))
+data = inspector.extract_inputs_per_goal(inspector.replayDir + "/" + inspector.testReplay)
+lengths = [len(data[i]["frames"]) for i in range(len(data))]
+print(lengths)
+interpolator = ConstantSplit(120.0, 1)
+interpolated_data = [interpolator.interpolate_all_frames(data[i]["frames"]) for i in range(len(data))]
+interpolated_lengths = [len(interpolated_data[i]) for i in range(len(interpolated_data))]
+print(interpolated_lengths)
+'''
+itp = GaussSteps(120)
+n = 3
+start_float = 0.9
+end_float = 0.9
+start_bool = True
+end_bool = True
+floats = [start_float]
+bools = [start_bool]
+for i in range(n):
+    floats.append(itp.interpolate_two_values(start_float, end_float, n, i))
+    bools.append(itp.interpolate_two_values(start_bool, end_bool, n, i))
+floats.append(end_float)
+bools.append(end_bool)
+print(floats)
+print(bools)
+'''
