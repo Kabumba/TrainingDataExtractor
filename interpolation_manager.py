@@ -15,7 +15,7 @@ class Interpolator:
         self.bool_controls = ["jump", "boost", "handbrake"]
 
     def to_string(self):
-        return type(self).__name__ + str(self.target_framerate)
+        return "[" + type(self).__name__ + str(self.target_framerate) + "]"
 
     def interpolate_two_bools(self, start_value: bool, end_value: bool, frames_between: int, frame_index: int) -> bool:
         '''
@@ -65,7 +65,7 @@ class Interpolator:
         '''
         Interpolates all input dimensions between start_frame and end_frame to match the target_framerate.
         Ideally, start_frame and end_frame are follow-up frames
-        :param start_frame: a frame structured as described in TODO: find final place for that method
+        :param start_frame: a frame structured as described in input_extractor.extract_inputs_from_goal
         :param end_frame: a frame structured the same way as start_frame
         :return: list of frames to insert between start_frame and end_frame to interpolate between them
         '''
@@ -93,7 +93,7 @@ class Interpolator:
         '''
         Takes structured input data and adds interpolated frames inbetween to raise the framerate to the
         target_framerate
-        :param input_frame_data: frames structured as described in TODO: see above
+        :param input_frame_data: frames structured as described in input_extractor.extract_inputs_from_goal
         :return:
         '''
         interpolated_inputs = []
@@ -134,7 +134,7 @@ class ConstantSplit(Interpolator):
         self.split_ratio = split_ratio
 
     def to_string(self):
-        return type(self).__name__ + str(self.target_framerate) + str(self.split_ratio)
+        return "[" + type(self).__name__ + str(self.target_framerate) + "," + str(self.split_ratio) + "]"
 
     def interpolate_two_values(self, start_value, end_value, frames_between, frame_index):
         if frame_index + 1 > frames_between * self.split_ratio:
