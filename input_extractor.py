@@ -17,6 +17,7 @@ def extract_inputs_per_goal(replay_path):
     analysis_manager = AnalysisManager(game)
     analysis_manager.create_data()
     df = analysis_manager.data_frame
+    # print("DataFrame: " + str(len(df)))
 
     kickoff_frames = game.kickoff_frames
     goal_frames = [goal.frame_number for goal in game.goals]
@@ -29,6 +30,8 @@ def extract_inputs_per_goal(replay_path):
     if len(end_frames) < len(start_frames):
         end_frames.append(last_frame)
     assert (len(end_frames) == len(start_frames))
+    # print(str(len(start_frames)) + " goals over " + str(last_frame) + " frames")
+    # print([(start_frames[i] ,end_frames[i]) for i in range(len(start_frames))])
 
     # adjust for missing indices in df, that slices ignore
     goal_slices = [slice(start_frames[i] - i - 1, end_frames[i] - i) for i in range(len(end_frames))]
@@ -89,7 +92,12 @@ def extract_inputs_from_goal(game: Game, goal_data_frame):
                 temp = NaN_fixer(player.controls.loc[frame_index, c])
                 if temp == None:
                     temp = False
+                if c == "throttle" and temp == 127.0/128.0:
+                    temp = 1.0
+                if c == "steer" and temp == -127.0/128.0:
+                    temp = -1.0
                 player_data["inputs"][c] = temp
             frame["players"].append(player_data)
         input_data["frames"].append(frame)
+    # print(len(input_data))
     return input_data

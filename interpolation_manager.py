@@ -8,7 +8,7 @@ class Interpolator:
     Parent class for all different kinds of Interpolators.
     Creates additional frames to increase the framerate of the input data
     '''
-    def __init__(self, target_framerate: float):
+    def __init__(self, target_framerate: float = 120):
         self.target_framerate = target_framerate  # in frames per second
         self.controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "boost", "handbrake"]
         self.float_controls = ["throttle", "steer", "pitch", "yaw", "roll"]
@@ -44,6 +44,7 @@ class Interpolator:
 
     def interpolate_two_values(self, start_value, end_value, frames_between: int, frame_index: int):
         '''
+        !CURRENTLY BUGGED, DON'T USE!
         Calls interpolate_two_bools or interpolate_two_floats depending on the type of value used.
         Only overwrite this if the interpolating behavior is indifferent to the type of data used
         :param start_value: The Value of the input in the starting frame
@@ -53,10 +54,15 @@ class Interpolator:
         frames that get inserted inbetween start and end. Min: 0, Max frames_between-1
         :return: The interpolated value
         '''
-        if type(start_value) == bool and type(end_value) == bool:
+        bool_types = [bool, numpy.bool_]
+        float_types = [float, numpy.float_, numpy.float64, int, numpy.int_]
+        if type(start_value) in bool_types and type(end_value) in bool_types:
             return self.interpolate_two_bools(start_value, end_value, frames_between, frame_index)
-        if type(start_value) == float and type(end_value) == float:
+
+        if type(start_value) in float_types and type(end_value) in float_types:
             return self.interpolate_two_floats(start_value, end_value, frames_between, frame_index)
+        print("The start and end values dont match types or are neither bool nor float! start_value: " + str(start_value) + " end_value: " + str(
+                end_value))
         raise ValueError(
             "The start and end values dont match types or are neither bool nor float! start_value: " + str(start_value) + " end_value: " + str(
                 end_value))
@@ -80,11 +86,9 @@ class Interpolator:
                 end_inputs = end_frame["players"][player_index]["inputs"]
                 player_data = {"index": player_start["index"], "inputs": {}}
                 for c in self.float_controls:
-                    player_data["inputs"][c] = self.interpolate_two_floats(start_inputs[c], end_inputs[c],
-                                                                           frames_between, frame_index)
+                    player_data["inputs"][c] = self.interpolate_two_floats(start_inputs[c], end_inputs[c], frames_between, frame_index)
                 for c in self.bool_controls:
-                    player_data["inputs"][c] = self.interpolate_two_bools(start_inputs[c], end_inputs[c],
-                                                                          frames_between, frame_index)
+                    player_data["inputs"][c] = self.interpolate_two_bools(start_inputs[c], end_inputs[c], frames_between, frame_index)
                 frame["players"].append(player_data)
             interpolated_frames.append(frame)
         return interpolated_frames
@@ -93,7 +97,7 @@ class Interpolator:
         '''
         Takes structured input data and adds interpolated frames inbetween to raise the framerate to the
         target_framerate
-        :param input_frame_data: frames structured as described in input_extractor.extract_inputs_from_goal
+        :param input_frame_data: list of frames structured as described in input_extractor.extract_inputs_from_goal
         :return:
         '''
         interpolated_inputs = []
@@ -102,6 +106,16 @@ class Interpolator:
             interpolated_inputs.extend(self.interpolate_two_frames(input_frame_data[i], input_frame_data[i + 1]))
         interpolated_inputs.append(input_frame_data[len(input_frame_data) - 1])
         return interpolated_inputs
+
+    def interpolate_sequence(self, input_sequence: dict) -> list:
+        '''
+        Takes a structured input sequence and adds interpolated frames inbetween to raise the framerate to the
+        target_framerate
+        :param input_sequence: an input_sequence structured as described in input_extractor.extract_inputs_from_goal
+        :return:
+        '''
+        interpolated_sequence = {"player_info": input_sequence["player_info"], "frames": self.interpolate_all_frames(input_sequence["frames"])}
+        return interpolated_sequence
 
     def missing_frame_times(self, start_time: float, end_time: float) -> list:
         '''
@@ -123,7 +137,7 @@ class Interpolator:
 
 
 class ConstantSplit(Interpolator):
-    def __init__(self, target_framerate, split_ratio):
+    def __init__(self, split_ratio: float, target_framerate: float = 120.0):
         '''
         Interpolates between two frames by copying the start or the end frame depending on the split_ratio
         :param target_framerate:
@@ -136,7 +150,13 @@ class ConstantSplit(Interpolator):
     def to_string(self):
         return "[" + type(self).__name__ + str(self.target_framerate) + "," + str(self.split_ratio) + "]"
 
-    def interpolate_two_values(self, start_value, end_value, frames_between, frame_index):
+    def interpolate_two_bools(self, start_value, end_value, frames_between, frame_index):
+        if frame_index + 1 > frames_between * self.split_ratio:
+            return end_value
+        else:
+            return start_value
+
+    def interpolate_two_floats(self, start_value, end_value, frames_between, frame_index):
         if frame_index + 1 > frames_between * self.split_ratio:
             return end_value
         else:
@@ -153,7 +173,7 @@ class SmoothSteps(Interpolator):
 
     def interpolate_two_bools(self, start_value: bool, end_value: bool, frames_between: int, frame_index: int) -> bool:
         itp = ConstantSplit(self.target_framerate, 0.5)
-        return itp.interpolate_two_values(start_value, end_value, frames_between, frame_index)
+        return itp.interpolate_two_bools(start_value, end_value, frames_between, frame_index)
 
 
 class Randomizer(Interpolator):
@@ -162,11 +182,11 @@ class Randomizer(Interpolator):
     '''
 
     def interpolate_two_bools(self, start_value: bool, end_value: bool, frames_between: int, frame_index: int) -> bool:
-        return random.Random().uniform(0, 1) < 0.5
+        return random.Random().uniform(-1, 1) < 0
 
     def interpolate_two_floats(self, start_value: float, end_value: float, frames_between: int,
                                frame_index: int) -> float:
-        return random.Random().uniform(0, 1)
+        return random.Random().uniform(-1, 1)
 
 
 class GaussSteps(Interpolator):
@@ -179,7 +199,7 @@ class GaussSteps(Interpolator):
         s = float(start_value)
         e = float(end_value)
         itp = SmoothSteps(self.target_framerate)
-        return random.Random().uniform(0, 1) < itp.interpolate_two_floats(s, e, frames_between, frame_index)
+        return random.Random().uniform(-1, 1) < itp.interpolate_two_floats(s, e, frames_between, frame_index)
 
     def interpolate_two_floats(self, start_value: float, end_value: float, frames_between: int,
                                frame_index: int) -> float:
@@ -188,4 +208,4 @@ class GaussSteps(Interpolator):
         next_step = itp.interpolate_two_floats(start_value, end_value, frames_between, frame_index + 1)
         sdv_width = 1.28155  # how many standard deviations to the half-way point to the next step? 1.28155 means only
         # 10% chance for the value to be closer to the next steps mean than to the current steps mean
-        return min(max(step + random.Random().gauss(0, abs(next_step - step) / (2 * sdv_width)), 0.0), 1.0)
+        return min(max(step + random.Random().gauss(0, abs(next_step - step) / (2 * sdv_width)), -1.0), 1.0)
