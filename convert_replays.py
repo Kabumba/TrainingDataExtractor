@@ -10,6 +10,10 @@ from input_extractor import extract_inputs_per_goal
 from interpolation_manager import *
 from datetime import datetime
 
+'''
+This file is for automatically converting replays in one directory to the interpolated input sequences
+'''
+
 
 def convert_single_replay(replay_file, interpolators: [Interpolator] = [], save_unaltered: bool = False):
     replay_name = os.path.splitext(os.path.basename(replay_file))[0]
@@ -36,7 +40,7 @@ def convert_single_replay(replay_file, interpolators: [Interpolator] = [], save_
         goal_name = base_name
         while goal_name in os.listdir(dirs.UNFINISHED_INPUT_DIR):
             input_sequences.append(IO_manager.load_input_sequence(dirs.UNFINISHED_INPUT_DIR + "/" + goal_name))
-            i = i+1
+            i = i + 1
             goal_name = replay_name + "_" + str(i) + ".pbz2"
     else:
         input_sequences = extract_inputs_per_goal(_path)
@@ -45,8 +49,8 @@ def convert_single_replay(replay_file, interpolators: [Interpolator] = [], save_
         # print("Goal " + str(i + 1) + ": " + str(len(input_sequences[i]["frames"])) + " frames")
         if save_unaltered and \
                 replay_name + "_" + str(i) + ".pbz2" not in os.listdir(dirs.UNFINISHED_INPUT_DIR):
-            #print([x["players"][0]["inputs"]["throttle"] for x in input_sequences[i]["frames"]])
-            #print([x["players"][0]["inputs"]["steer"] for x in input_sequences[i]["frames"]])
+            # print([x["players"][0]["inputs"]["throttle"] for x in input_sequences[i]["frames"]])
+            # print([x["players"][0]["inputs"]["steer"] for x in input_sequences[i]["frames"]])
             save_unfinished_input_sequence(input_sequences[i], replay_name + "_" + str(i))
             # print(replay_flag + "Saved unaltered.")
         else:
@@ -56,7 +60,7 @@ def convert_single_replay(replay_file, interpolators: [Interpolator] = [], save_
             interpolated_sequence = interpolator.interpolate_sequence(input_sequences[i])
             # print([x["players"][0]["inputs"]["steer"] for x in interpolated_sequence["frames"]])
             if interpolator.to_string() + replay_name + "_" + str(i) + ".pbz2" not in os.listdir(
-                dirs.FINISHED_INPUT_DIR):
+                    dirs.FINISHED_INPUT_DIR):
                 save_finished_input_sequence(interpolated_sequence,
                                              interpolator.to_string() + replay_name + "_" + str(i))
                 # print(replay_flag + interpolator.to_string() + " Saved interpolated.")
@@ -70,6 +74,13 @@ def get_time():
 
 
 def convert_all_replays(interpolators, save_unaltered=False):
+    '''
+    Converts all replays in the designated replay directory to input_sequences, interpolated by all interpolators given
+    and saves them in the respective directory as well as the unaltered input sequence if desired in the respective directory
+    :param interpolators:
+    :param save_unaltered:
+    :return:
+    '''
     dirs = Directories()
     replays = os.listdir(dirs.REPLAY_DIR)
     print("Converting " + str(len(replays)) + " Replays")
@@ -84,7 +95,7 @@ def convert_all_replays(interpolators, save_unaltered=False):
         pool.join()
     end_time = get_time()
     print("============ Done converting! ===========")
-    print("Started at "+start_time+" and ended at "+end_time)
+    print("Started at " + start_time + " and ended at " + end_time)
 
 
 def main():
