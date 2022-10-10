@@ -1,108 +1,84 @@
+import os
+
 import numpy as np
 import rlgym
-from rlgym.utils.state_setters import StateSetter
-from rlgym.utils.common_values import BLUE_TEAM, ORANGE_TEAM, BALL_RADIUS
-from rlgym.utils.state_setters import StateWrapper
+from rlgym.utils.obs_builders import DefaultObs
 from rlgym.utils.terminal_conditions import common_conditions
 
 import IO_manager
+from spawn_setter import SpawnSetter
 
 
-def execute_input_sequence(input_sequence):
-    frames = input_sequence["frames"]
-    controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "boost", "handbrake"]
-    frame_count = 1  # len(frames)
+def execute_input_sequences(input_sequence_file_names: list, save_immediately=False, keep_saved_data_active=False):
+    spawn_setter = SpawnSetter()
     env = rlgym.make(tick_skip=1,
                      team_size=1,
                      terminal_conditions=[common_conditions.GoalScoredCondition()],
-                     state_setter=SpawnSetter(input_sequence["player_info"]),
-                     spawn_opponents=True
+                     state_setter=spawn_setter,
+                     spawn_opponents=True,
+                     obs_builder=DefaultObs(pos_coef=1, ang_coef=1, ang_vel_coef=1, lin_vel_coef=1)
                      )
+    game_states_sequences = []
+    for i in range(len(input_sequence_file_names)):
+        input_sequence = IO_manager.load_finished_input_sequence(input_sequence_file_names[i])
+        print("Executing sequence " + str(i + 1) + "/" + str(len(input_sequence_file_names)))
+        game_states = execute_input_sequence(input_sequence, env, spawn_setter)
+        if save_immediately:
+            IO_manager.save_game_state_sequence(game_states, input_sequence_file_names[i])
+            if keep_saved_data_active:
+                game_states_sequences.append(game_states)
+        else:
+            game_states_sequences.append(game_states)
+    env.close()
+    return game_states_sequences
+
+
+def execute_input_sequence(input_sequence, env, state_setter):
+    controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "boost", "handbrake"]
+    state_setter.inject_new_spawn_info(input_sequence)
     obs = env.reset()
+    frames = input_sequence["frames"]
+    frame_count = len(frames)
+    print("Input sequence with " + str(frame_count) + " frames.")
     game_states = [obs]
-    for i in range(frame_count):
-        frame = frames[i]
-        inputs1 = frame[0]["inputs"]
-        inputs2 = frame[1]["inputs"]
+    for j in range(frame_count):
+        frame = frames[j]
+        inputs1 = frame["players"][0]["inputs"]
+        inputs2 = frame["players"][1]["inputs"]
         action1 = np.array([inputs1[c] for c in controls])
         action2 = np.array([inputs2[c] for c in controls])
         actions = [action1, action2]
         new_obs, reward, done, game_info = env.step(actions)
         game_states.append(new_obs)
-    env.close()
+        if done:
+            print("Goal in frame " + str(j + 1) + "/" + str(frame_count))
+            break
     return game_states
 
 
-def load_and_execute(input_sequence_file_name):
-    input_sequence = IO_manager.load_finished_input_sequence(input_sequence_file_name)
-    return execute_input_sequence(input_sequence)
+def load_and_execute(input_sequence_file_names):
+    input_sequences = [IO_manager.load_finished_input_sequence(name) for name in input_sequence_file_names]
+    return execute_input_sequences(input_sequences)
 
 
-def load_execute_save(input_sequence_file_name):
-    game_states = load_and_execute(input_sequence_file_name)
-    IO_manager.save_game_state_sequence(game_states, input_sequence_file_name)
+def load_execute_save(input_sequence_file_names):
+    game_states_sequences = load_and_execute(input_sequence_file_names)
+    for i in len(input_sequence_file_names):
+        IO_manager.save_game_state_sequence(game_states_sequences[i], input_sequence_file_names[i])
 
 
-class SpawnSetter(StateSetter):
+dirs = IO_manager.Directories()
+input_files = os.listdir(dirs.FINISHED_INPUT_DIR)
+#sequences = execute_input_sequences([dirs.TEST_INPUT_SEQUENCE], save_immediately=True)
+game_states = IO_manager.load_game_state_sequence(dirs.TEST_INPUT_SEQUENCE)
+inputs = IO_manager.load_finished_input_sequence(dirs.TEST_INPUT_SEQUENCE)
+n = len(game_states)-1
+player = 1
+for i in range(n):
+    k = 0
+    for j in inputs["frames"][i]["players"][player]["inputs"]:
+        if inputs["frames"][i]["players"][player]["inputs"][j] != game_states[i+1][player][9:17][k]:
+            print(str(inputs["frames"][i]["players"][player]["inputs"][j]) + " vs " + str(game_states[i+1][player][9:17][k]))
+        k = k+1
+print("done")
 
-    def __init__(self, player_info):
-        self.player_info = player_info
-        self.blue_spawn_locations = [
-            [-2048, -2560, 0.25 * np.pi],
-            [2048, -2560, 0.75 * np.pi],
-            [-256, -3840, 0.50 * np.pi],
-            [256, -3840, 0.50 * np.pi],
-            [0, -4608, 0.50 * np.pi],
-        ]
-        self.orange_spawn_locations = [
-            [2048, 2560, -0.75 * np.pi],
-            [-2048, 2560, -0.25 * np.pi],
-            [256, 3840, -0.50 * np.pi],
-            [-256, 3840, -0.50 * np.pi],
-            [0, 4608, -0.50 * np.pi],
-        ]
-
-    def update_player_info(self, player_info):
-        self.player_info = player_info
-
-    def get_spawn_info(self):
-        spawn_info = []
-        for player in self.player_info:
-            info = [player["index",
-                           player["team"]]]
-            location = [player["spawn_info"]["pos_x"],
-                        player["spawn_info"]["pos_y"],
-                        player["spawn_info"]["rot_y"]]
-            if player["team"] == ORANGE_TEAM:
-                team_locs = self.orange_spawn_locations
-            else:
-                team_locs = self.blue_spawn_locations
-            i = np.argmin(np.array([loc[0] - location[0] for loc in team_locs]))
-            # info.extend(location)
-            info.extend(team_locs[i])
-            spawn_info.append(info)
-        return spawn_info
-
-    def reset(self, state_wrapper: StateWrapper):
-        spawn_info = self.get_spawn_info()
-        z = 17
-        start_boost = 0.33
-        for car in state_wrapper.cars:
-            info = spawn_info[0]
-            if car.team_num == ORANGE_TEAM:
-                for i in range(len(spawn_info)):
-                    if spawn_info[i][1] == ORANGE_TEAM:
-                        info = spawn_info[i]
-                        break
-            if car.team_num == BLUE_TEAM:
-                for i in range(len(spawn_info)):
-                    if spawn_info[i][1] == BLUE_TEAM:
-                        info = spawn_info[i]
-                        break
-            x = info[2]
-            y = info[3]
-            yaw = info[4]
-            car.set_pos(x, y, z)
-            car.set_rot(0, yaw, 0)
-            car.boost = start_boost
-        state_wrapper.ball.set_pos(0, 0, BALL_RADIUS)

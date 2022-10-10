@@ -1,6 +1,7 @@
 import random
 
 import numpy
+from numpy import sign
 
 
 class Interpolator:
@@ -8,6 +9,7 @@ class Interpolator:
     Parent class for all different kinds of Interpolators.
     Creates additional frames to increase the framerate of the input data
     '''
+
     def __init__(self, target_framerate: float = 120):
         self.target_framerate = target_framerate  # in frames per second
         self.controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "boost", "handbrake"]
@@ -61,10 +63,12 @@ class Interpolator:
 
         if type(start_value) in float_types and type(end_value) in float_types:
             return self.interpolate_two_floats(start_value, end_value, frames_between, frame_index)
-        print("The start and end values dont match types or are neither bool nor float! start_value: " + str(start_value) + " end_value: " + str(
-                end_value))
+        print("The start and end values dont match types or are neither bool nor float! start_value: " + str(
+            start_value) + " end_value: " + str(
+            end_value))
         raise ValueError(
-            "The start and end values dont match types or are neither bool nor float! start_value: " + str(start_value) + " end_value: " + str(
+            "The start and end values dont match types or are neither bool nor float! start_value: " + str(
+                start_value) + " end_value: " + str(
                 end_value))
 
     def interpolate_two_frames(self, start_frame: dict, end_frame: dict) -> list:
@@ -86,9 +90,11 @@ class Interpolator:
                 end_inputs = end_frame["players"][player_index]["inputs"]
                 player_data = {"index": player_start["index"], "inputs": {}}
                 for c in self.float_controls:
-                    player_data["inputs"][c] = self.interpolate_two_floats(start_inputs[c], end_inputs[c], frames_between, frame_index)
+                    player_data["inputs"][c] = self.interpolate_two_floats(start_inputs[c], end_inputs[c],
+                                                                           frames_between, frame_index)
                 for c in self.bool_controls:
-                    player_data["inputs"][c] = self.interpolate_two_bools(start_inputs[c], end_inputs[c], frames_between, frame_index)
+                    player_data["inputs"][c] = self.interpolate_two_bools(start_inputs[c], end_inputs[c],
+                                                                          frames_between, frame_index)
                 frame["players"].append(player_data)
             interpolated_frames.append(frame)
         return interpolated_frames
@@ -114,7 +120,8 @@ class Interpolator:
         :param input_sequence: an input_sequence structured as described in input_extractor.extract_inputs_from_goal
         :return:
         '''
-        interpolated_sequence = {"player_info": input_sequence["player_info"], "frames": self.interpolate_all_frames(input_sequence["frames"])}
+        interpolated_sequence = {"player_info": input_sequence["player_info"],
+                                 "frames": self.interpolate_all_frames(input_sequence["frames"])}
         return interpolated_sequence
 
     def missing_frame_times(self, start_time: float, end_time: float) -> list:
@@ -167,6 +174,7 @@ class SmoothSteps(Interpolator):
     '''
     Interpolates by gradually increasing or decreasing the start value to the end value
     '''
+
     def interpolate_two_floats(self, start_value: float, end_value: float, frames_between: int,
                                frame_index: int) -> float:
         return start_value + (end_value - start_value) * (frame_index + 1) / (frames_between + 1)
@@ -187,6 +195,43 @@ class Randomizer(Interpolator):
     def interpolate_two_floats(self, start_value: float, end_value: float, frames_between: int,
                                frame_index: int) -> float:
         return random.Random().uniform(-1, 1)
+
+
+class DirectedRandomizer(Interpolator):
+    '''
+    Interpolates with random inputs that preserve the direction of the input
+    '''
+
+    def interpolate_two_bools(self, start_value: bool, end_value: bool, frames_between: int, frame_index: int) -> bool:
+        if start_value == end_value:
+            return start_value
+        return random.Random().uniform(-1, 1) < 0
+
+    def interpolate_two_floats(self, start_value: float, end_value: float, frames_between: int,
+                               frame_index: int) -> float:
+        if start_value == 0:
+            if end_value == 0:
+                a = -1
+                b = 1
+            if end_value > 0:
+                a = 0
+                b = 1
+            if end_value < 0:
+                a = -1
+                b = 0
+        if start_value > 0:
+            b = 1
+            if end_value >= 0:
+                a = 0
+            if end_value < 0:
+                a = -1
+        if start_value < 0:
+            a = -1
+            if end_value <= 0:
+                b = 0
+            if end_value > 0:
+                b = 1
+        return random.Random().uniform(a, b)
 
 
 class GaussSteps(Interpolator):
