@@ -20,7 +20,10 @@ def decompile_replay(replay_path):
     """
     with open(replay_path, 'rb') as f:
         buf = f.read()
-    return parse_replay(buf)
+    try:
+        return parse_replay(buf)
+    except Exception as e:
+        raise ImportError(e)
 
 
 def analyze_replay_file(replay_path: str, controls: ControlsCreator = None,

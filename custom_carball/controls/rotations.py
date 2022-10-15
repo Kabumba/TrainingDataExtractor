@@ -50,7 +50,6 @@ def get_rotation_matrices(rotations: pd.Series) -> pd.Series:
     sin_yaw = np.sin(yaw).rename('sin_yaw')
 
     components: pd.DataFrame = pd.concat([cos_roll, sin_roll, cos_pitch, sin_pitch, cos_yaw, sin_yaw], axis=1)
-
     rotation_matrix = components.apply(get_rotation_matrix_from_row, axis=1, result_type='reduce')
     return rotation_matrix
 

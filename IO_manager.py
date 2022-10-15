@@ -1,5 +1,6 @@
 import bz2
 import pickle
+import shutil
 
 from interpolation_manager import *
 
@@ -8,6 +9,7 @@ class Directories:
     def __init__(self):
         self.BASE_DIR = "C:/Users/Frederik/Masterarbeit/Data"
         self.REPLAY_DIR = self.BASE_DIR + "/Replays"
+        self.CORRUPTED_REPLAY_DIR = self.BASE_DIR + "/CorruptedReplays"
         self.UNFINISHED_INPUT_DIR = self.BASE_DIR + "/UnalteredInputSequences"
         self.FINISHED_INPUT_DIR = self.BASE_DIR + "/InterpolatedInputSequences"
         self.GAME_STATE_DIR = self.BASE_DIR + "/GameTickPackets"
@@ -16,6 +18,10 @@ class Directories:
         self.TEST_INTERPOLATOR = ConstantSplit(1).to_string()
         self.TEST_INPUT_SEQUENCE = self.TEST_INTERPOLATOR + self.TEST_REPLAY_NAME + "_0.pbz2"
 
+
+def move_corrupted_replay(replay_file_name):
+    dirs = Directories()
+    shutil.move(dirs.REPLAY_DIR + "/" + replay_file_name, dirs.CORRUPTED_REPLAY_DIR + "/" + replay_file_name)
 
 def save_input_sequence(input_sequence, output_path):
     with bz2.BZ2File(output_path, 'w') as f:

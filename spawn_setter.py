@@ -43,34 +43,29 @@ class SpawnSetter(StateSetter):
                 team_locs = self.orange_spawn_locations
             else:
                 team_locs = self.blue_spawn_locations
-            i = np.argmin(np.array([loc[0] - location[0] for loc in team_locs]))
-            # info.extend(location)
-            info.extend(team_locs[i])
+            # i = np.argmin(np.array([abs(loc[0] - location[0]) for loc in team_locs]))
+            # info.extend(team_locs[i])
+            info.extend(location)
             spawn_info.append(info)
         return spawn_info
 
     def reset(self, state_wrapper: StateWrapper):
-        print(self.current_info_index)
         spawn_info = self.get_spawn_info()
-        z = 17
+        z = 17.01
         start_boost = 0.33
-        for car in state_wrapper.cars:
-            info = spawn_info[0]
-            if car.team_num == ORANGE_TEAM:
-                for i in range(len(spawn_info)):
-                    if spawn_info[i][1] == ORANGE_TEAM:
-                        info = spawn_info[i]
-                        break
-            if car.team_num == BLUE_TEAM:
-                for i in range(len(spawn_info)):
-                    if spawn_info[i][1] == BLUE_TEAM:
-                        info = spawn_info[i]
-                        break
+        for i in range(len(state_wrapper.cars)):
+            car = state_wrapper.cars[i]
+            info = spawn_info[i]
             x = info[2]
             y = info[3]
             yaw = info[4]
+            print(x,y,z)
             car.set_pos(x, y, z)
             car.set_rot(0, yaw, 0)
             car.boost = start_boost
+            car.set_ang_vel(0, 0, 0)
+            car.set_lin_vel(0, 0, 0)
         state_wrapper.ball.set_pos(0, 0, BALL_RADIUS)
+        state_wrapper.ball.set_lin_vel(0, 0, 0)
+        state_wrapper.ball.set_ang_vel(0, 0, 0)
         self.current_info_index = self.current_info_index + 1

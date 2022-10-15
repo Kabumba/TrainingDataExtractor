@@ -1,6 +1,7 @@
 import logging
 import time
 
+import numpy as np
 import pandas as pd
 
 from custom_carball.json_parser.game import Game
@@ -31,21 +32,36 @@ class ControlsCreator:
 
             frames_not_on_ground = player.data.loc[:, 'pos_z'][player.data.loc[:, 'pos_z'] > 18].index.values
             # print(frames_not_on_ground)
-            rotations = player.data.loc[frames_not_on_ground, ['rot_x', 'rot_y', 'rot_z']]
-            ang_vels = player.data.loc[frames_not_on_ground, ['ang_vel_x', 'ang_vel_y', 'ang_vel_z']] / 1000
+            try:
+                if len(frames_not_on_ground) > 0:
+                    rotations = player.data.loc[frames_not_on_ground, ['rot_x', 'rot_y', 'rot_z']]
+                    ang_vels = player.data.loc[frames_not_on_ground, ['ang_vel_x', 'ang_vel_y', 'ang_vel_z']] / 1000
 
-            predicted_inputs = predict_user_inputs(ang_vels, rotations, game.frames.delta)
-            # print(predicted_inputs)
-            pitch = predicted_inputs.loc[:, 'predicted_input_pitch']
-            yaw = predicted_inputs.loc[:, 'predicted_input_yaw']
-            roll = predicted_inputs.loc[:, 'predicted_input_roll']
+                    predicted_inputs = predict_user_inputs(ang_vels, rotations, game.frames.delta)
+                    # print(predicted_inputs)
+                    pitch = predicted_inputs.loc[:, 'predicted_input_pitch']
+                    yaw = predicted_inputs.loc[:, 'predicted_input_yaw']
+                    roll = predicted_inputs.loc[:, 'predicted_input_roll']
+                else:
+                    pitch = pd.Series([])
+                    yaw = pd.Series([])
+                    roll = pd.Series([])
 
-            # rotations = pd.concat((player.data.pos_z, player.data.loc[frames_not_on_ground, 'rot_x':'rot_z'],
-            #                        predicted_inputs), axis=1)
+                # rotations = pd.concat((player.data.pos_z, player.data.loc[frames_not_on_ground, 'rot_x':'rot_z'],
+                #                        predicted_inputs), axis=1)
 
-            player.controls = pd.DataFrame.from_dict({'throttle': throttle, 'steer': steer, 'pitch': pitch, 'yaw': yaw,
-                                                      'roll': roll, 'jump': jump, 'boost': boost,
-                                                      'handbrake': handbrake})
+                player.controls = pd.DataFrame.from_dict({'throttle': throttle, 'steer': steer, 'pitch': pitch, 'yaw': yaw,
+                                                          'roll': roll, 'jump': jump, 'boost': boost,
+                                                          'handbrake': handbrake})
+            except TypeError as te:
+                print(pitch)
+                print(type(throttle))
+                print(type(steer))
+                print(type(jump))
+                print(type(boost))
+                print(type(handbrake))
+                print(handbrake.shape)
+                raise
 
         logger.info('Finished controls in %s seconds', str(time.time() - start_time))
         return

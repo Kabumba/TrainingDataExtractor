@@ -204,7 +204,6 @@ class Game:
                 for goal in self.goals:
                     if not goal.player and goal.player_name == found_player.name:
                         goal.player = found_player
-
             found_player.parse_data(all_data['player_ball_data'][_player_actor_id])
             # camera_settings might not exist (see 0AF8AC734890E6D3995B829E474F9924)
             found_player.get_camera_settings(all_data['cameras_data'].get(_player_actor_id, {}))
