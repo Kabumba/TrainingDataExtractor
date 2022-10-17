@@ -1,4 +1,6 @@
+from datetime import datetime
 import os
+import random
 
 import numpy as np
 import rlgym
@@ -6,6 +8,7 @@ from rlgym.utils.obs_builders import DefaultObs
 from rlgym.utils.terminal_conditions import common_conditions
 
 import IO_manager
+from interpolation_manager import ConstantSplit, Randomizer, DirectedRandomizer, SmoothSteps, GaussSteps, Interpolator
 from observation_builder_1v1 import ObservationBuilder1v1
 from spawn_setter import SpawnSetter
 
@@ -14,7 +17,7 @@ def execute_input_sequences(input_sequence_file_names: list, save_immediately=Fa
     spawn_setter = SpawnSetter()
     env = rlgym.make(tick_skip=1,
                      team_size=1,
-                     game_speed=1,
+                     game_speed=100,
                      terminal_conditions=[common_conditions.GoalScoredCondition()],
                      state_setter=spawn_setter,
                      spawn_opponents=True,
@@ -44,7 +47,7 @@ def execute_input_sequence(input_sequence, env, state_setter):
     frame_count = len(frames)
     follow_up_frames = 0
     waiting_frames = 0
-    print("Input sequence with " + str(frame_count) + " frames.")
+    # print("Input sequence with " + str(frame_count) + " frames.")
     prev_obs = obs[0][:85]
     game_states = []
     interrupted = False
@@ -63,7 +66,7 @@ def execute_input_sequence(input_sequence, env, state_setter):
         game_states.append(prev_obs)
         prev_obs = new_obs[0][:85]
         if done:
-            print("Goal in frame " + str(j + 1) + "/" + str(frame_count))
+            # print("Goal in frame " + str(j + 1) + "/" + str(frame_count))
             interrupted = True
             break
     game_states.append(prev_obs)
@@ -91,11 +94,23 @@ def load_execute_save(input_sequence_file_names):
         IO_manager.save_game_state_sequence(game_states_sequences[i], input_sequence_file_names[i])
 
 
+def run(input_files):
+    dirs = IO_manager.Directories()
+    start_time = get_time()
+    for f in os.listdir(dirs.GAME_STATE_DIR):
+        if f in input_files:
+            input_files.remove(f)
+    random.shuffle(input_files)
+    execute_input_sequences(input_files, save_immediately=True, keep_saved_data_active=False)
+    end_time = get_time()
+    print("============ Done converting! ===========")
+    print("Started at " + start_time + " and ended at " + end_time)
+
+
 def test():
     dirs = IO_manager.Directories()
-    # input_files = os.listdir(dirs.FINISHED_INPUT_DIR)
-    sequences = execute_input_sequences([dirs.TEST_INPUT_SEQUENCE], save_immediately=False, keep_saved_data_active=True)
-    IO_manager.save_game_state_sequence(sequences, "mariachi.pbz2")
+    sequences = execute_input_sequences([dirs.TEST_INPUT_SEQUENCE], save_immediately=True, keep_saved_data_active=False)
+    # IO_manager.save_game_state_sequence(sequences, "mariachi.pbz2")
     # sequences_slow = IO_manager.load_game_state_sequence("16er_test_1speed.pbz2")
     # sequences_fast = IO_manager.load_game_state_sequence("16er_test_100speed.pbz2")
     # s_no_tick = IO_manager.load_game_state_sequence("nomoretickskip.pbz2")
@@ -117,5 +132,41 @@ def test():
             print(sequences_fast[i][frame][cut])'''
 
 
-test()
-print("done")
+def get_time():
+    now = datetime.now()
+    return now.strftime("%H:%M:%S")
+
+
+def main():
+    interpolators = \
+        [ConstantSplit(1),
+         # ConstantSplit(0.75),
+         # ConstantSplit(0.5),
+         # ConstantSplit(0),
+         Randomizer(),
+         # DirectedRandomizer(),
+         # GaussSteps(),
+         SmoothSteps(),
+         # Interpolator(),
+         ]
+    interpolator_strings = [x.to_string() for x in interpolators]
+    print([x.to_string() for x in interpolators])
+    dirs = IO_manager.Directories()
+    input_files = os.listdir(dirs.FINISHED_INPUT_DIR)
+    start_time = get_time()
+    for f in input_files:
+        remove = True
+        for i in interpolator_strings:
+            if f.startswith(i):
+                remove = False
+                break
+        if remove:
+            input_files.remove(f)
+    run(input_files)
+    end_time = get_time()
+    print("============ Done converting! ===========")
+    print("Started at " + start_time + " and ended at " + end_time)
+
+
+if __name__ == '__main__':
+    main()

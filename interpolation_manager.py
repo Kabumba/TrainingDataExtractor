@@ -17,7 +17,10 @@ class Interpolator:
         self.bool_controls = ["jump", "boost", "handbrake"]
 
     def to_string(self):
-        return "[" + type(self).__name__ + str(self.target_framerate) + "]"
+        if self.target_framerate != 120:
+            return "[" + type(self).__name__ + str(self.target_framerate) + "]"
+        return "[" + type(self).__name__ + "]"
+
 
     def interpolate_two_bools(self, start_value: bool, end_value: bool, frames_between: int, frame_index: int) -> bool:
         '''
@@ -155,7 +158,9 @@ class ConstantSplit(Interpolator):
         self.split_ratio = split_ratio
 
     def to_string(self):
-        return "[" + type(self).__name__ + str(self.target_framerate) + "," + str(self.split_ratio) + "]"
+        if self.target_framerate != 120:
+            return "[" + type(self).__name__ + str(self.target_framerate) + "," + str(self.split_ratio) + "]"
+        return "[" + type(self).__name__ + "," + str(self.split_ratio) + "]"
 
     def interpolate_two_bools(self, start_value, end_value, frames_between, frame_index):
         if frame_index + 1 > frames_between * self.split_ratio:

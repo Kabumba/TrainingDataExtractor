@@ -59,7 +59,7 @@ class SpawnSetter(StateSetter):
             x = info[2]
             y = info[3]
             yaw = info[4]
-            print(x,y,z)
+            # print(x,y,z)
             car.set_pos(x, y, z)
             car.set_rot(0, yaw, 0)
             car.boost = start_boost

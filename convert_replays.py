@@ -12,7 +12,6 @@ This file is for automatically converting replays in one directory to the interp
 '''
 
 
-
 class ReplayConverter(object):
     def __init__(self, replays, interpolators: [Interpolator] = [], save_unaltered: bool = False):
         self.replays = replays
@@ -23,7 +22,7 @@ class ReplayConverter(object):
         replay_name = os.path.splitext(os.path.basename(replay_file))[0]
         replay_flag = "[" + get_time() + "] " + replay_name + " "
         if len(interpolators) == 0 and not save_unaltered:
-            #print(replay_flag + "skipped, because nothing should be saved.")
+            # print(replay_flag + "skipped, because nothing should be saved.")
             return
         dirs = Directories()
         base_name = replay_name + "_0" + ".pbz2"
@@ -32,7 +31,7 @@ class ReplayConverter(object):
             if interpolator.to_string() + base_name not in os.listdir(dirs.FINISHED_INPUT_DIR):
                 all_exist = False
         if save_unaltered and base_name in os.listdir(dirs.UNFINISHED_INPUT_DIR) and all_exist:
-            #print(replay_flag + "skipped, already exists.")
+            # print(replay_flag + "skipped, already exists.")
             return
 
         _path = dirs.REPLAY_DIR + "/" + replay_file
@@ -68,8 +67,8 @@ class ReplayConverter(object):
                 save_unfinished_input_sequence(input_sequences[i], replay_name + "_" + str(i))
                 # print(replay_flag + "Saved unaltered.")
             # else:
-                # if save_unaltered:
-                    # print(replay_flag + "Unaltered already saved, skipped saving.")
+            # if save_unaltered:
+            # print(replay_flag + "Unaltered already saved, skipped saving.")
 
             for interpolator in interpolators:
                 interpolated_sequence = interpolator.interpolate_sequence(input_sequences[i])
@@ -80,7 +79,7 @@ class ReplayConverter(object):
                                                  interpolator.to_string() + replay_name + "_" + str(i))
                     # print(replay_flag + interpolator.to_string() + " Saved interpolated.")
                 # else:
-                    # print(replay_flag + interpolator.to_string() + " Interpolated already saved, skipped saving.")
+                # print(replay_flag + interpolator.to_string() + " Interpolated already saved, skipped saving.")
 
     def multi_process(self):
         try:
@@ -167,6 +166,34 @@ def main():
     print("============ Done converting! ===========")
     print("Started at " + start_time + " and ended at " + end_time)
 
+
+def fix_names():
+    dirs = IO_manager.Directories()
+    files = os.listdir(dirs.FINISHED_INPUT_DIR)
+    interpolators = \
+        [ConstantSplit(1),
+         ConstantSplit(0.75),
+         ConstantSplit(0.5),
+         ConstantSplit(0),
+         Randomizer(),
+         DirectedRandomizer(),
+         GaussSteps(),
+         SmoothSteps(),
+         Interpolator()]
+    for f in files:
+        old_name = f.split("]")
+        old_prefix = old_name[0]
+        base_name = old_name[1]
+        for i in interpolators:
+            if f.startswith("[" + type(i).__name__ + "120]"):
+                os.rename(dirs.FINISHED_INPUT_DIR + "/" + f, dirs.FINISHED_INPUT_DIR + "/" + i.to_string() + base_name)
+                break
+            else:
+                if type(i) is ConstantSplit:
+                    r = old_prefix.split(",")[1]
+                    if i.split_ratio == float(r):
+                        os.rename(dirs.FINISHED_INPUT_DIR + "/" + f, dirs.FINISHED_INPUT_DIR + "/" + i.to_string() + base_name)
+                        break
 
 if __name__ == '__main__':
     main()
