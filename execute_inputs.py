@@ -46,7 +46,7 @@ def execute_input_sequence(input_sequence, env, state_setter):
     frames = input_sequence["frames"]
     frame_count = len(frames)
     follow_up_frames = 0
-    waiting_frames = 0
+    waiting_frames = 1200
     # print("Input sequence with " + str(frame_count) + " frames.")
     prev_obs = obs[0][:85]
     game_states = []
@@ -94,7 +94,7 @@ def load_execute_save(input_sequence_file_names):
         IO_manager.save_game_state_sequence(game_states_sequences[i], input_sequence_file_names[i])
 
 
-def run(input_files):
+def execute_all_inputs(input_files):
     dirs = IO_manager.Directories()
     start_time = get_time()
     for f in os.listdir(dirs.GAME_STATE_DIR):
@@ -107,29 +107,119 @@ def run(input_files):
     print("Started at " + start_time + " and ended at " + end_time)
 
 
-def test():
+def test_pos():
     dirs = IO_manager.Directories()
-    sequences = execute_input_sequences([dirs.TEST_INPUT_SEQUENCE], save_immediately=True, keep_saved_data_active=False)
+    # sequences = execute_input_sequences([dirs.TEST_INPUT_SEQUENCE], save_immediately=True, keep_saved_data_active=False)
     # IO_manager.save_game_state_sequence(sequences, "mariachi.pbz2")
-    # sequences_slow = IO_manager.load_game_state_sequence("16er_test_1speed.pbz2")
-    # sequences_fast = IO_manager.load_game_state_sequence("16er_test_100speed.pbz2")
+    sequences_slow = IO_manager.load_game_state_sequence("16er_test_1speed_uncapped_fps.pbz2")
+    sequences_fast = IO_manager.load_game_state_sequence("16er_test_100speed_uncapped_fps.pbz2")
     # s_no_tick = IO_manager.load_game_state_sequence("nomoretickskip.pbz2")
     # game_states = IO_manager.load_game_state_sequence(dirs.TEST_INPUT_SEQUENCE)
     # inputs = IO_manager.load_finished_input_sequence(dirs.TEST_INPUT_SEQUENCE)
     # n = len(game_states) - 1
-    frame = 7663
-    cut = slice(0, 3)
-    print(sequences[0][frame][cut])
-    '''
-    
+    start_frame = 0
+    end_frame = 7663
+    ball_pos = slice(0, 3)
+    car1_pos = slice(43, 46)
+    car2_pos = slice(64, 67)
+
+    print("gamespeed=1, frame 0")
+    print("i \t| ball_pos \t| blue_car_pos \t| orange_car_pos")
     for i in range(16):
-        print(sequences_slow[i][frame][cut])
-    print("-----")
-    print(s_no_tick[0][frame][cut])
+        print(str(i) + " \t| " + str(sequences_slow[i][start_frame][ball_pos]) + " \t| " + str(
+            sequences_slow[i][start_frame][car1_pos]) + " \t| " + str(sequences_slow[i][start_frame][car2_pos]))
     print("----")
+    print("gamespeed=1, frame 7663")
+    print("ball_pos | blue_car_pos | orange_car_pos")
     for i in range(16):
-        if len(sequences_fast[i]) > frame:
-            print(sequences_fast[i][frame][cut])'''
+        print(str(i) + " \t| " + str(sequences_slow[i][end_frame][ball_pos]) + " \t| " + str(
+            sequences_slow[i][end_frame][car1_pos]) + " \t| " + str(sequences_slow[i][end_frame][car2_pos]))
+    print("----")
+    print("gamespeed=100, frame 0")
+    print("ball_pos | blue_car_pos | orange_car_pos")
+    for i in range(16):
+        print(str(i) + " \t| " + str(sequences_fast[i][start_frame][ball_pos]) + " | " + str(
+            sequences_fast[i][start_frame][car1_pos]) + " \t| " + str(sequences_fast[i][start_frame][car2_pos]))
+    print("----")
+    print("gamespeed=100, frame 7663")
+    print("ball_pos | blue_car_pos | orange_car_pos")
+    for i in range(16):
+        if len(sequences_fast[i]) >= end_frame:
+            print(str(i) + " \t| " + str(sequences_fast[i][end_frame][ball_pos]) + " \t| " + str(
+                sequences_fast[i][end_frame][car1_pos]) + " \t| " + str(sequences_fast[i][end_frame][car2_pos]))
+    print("----")
+
+
+def test16():
+    dirs = IO_manager.Directories()
+    sequences = execute_input_sequences([dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         dirs.TEST_INPUT_SEQUENCE,
+                                         ], save_immediately=True, keep_saved_data_active=True)
+    IO_manager.save_game_state_sequence(sequences, "16er_test_100speed_uncapped_fps.pbz2")
+
+
+def test_boost():
+    dirs = IO_manager.Directories()
+    # sequences = execute_input_sequences([dirs.TEST_INPUT_SEQUENCE], save_immediately=True, keep_saved_data_active=False)
+    # IO_manager.save_game_state_sequence(sequences, "mariachi.pbz2")
+    sequences_slow = IO_manager.load_game_state_sequence("16er_test_1speed_uncapped_fps.pbz2")
+    sequences_slow_capped = IO_manager.load_game_state_sequence("16er_test_1speed.pbz2")
+    sequences_fast = IO_manager.load_game_state_sequence("16er_test_100speed_uncapped_fps.pbz2")
+    sequences_fast_capped = IO_manager.load_game_state_sequence("16er_test_100speed.pbz2")
+    # s_no_tick = IO_manager.load_game_state_sequence("nomoretickskip.pbz2")
+    # game_states = IO_manager.load_game_state_sequence(dirs.TEST_INPUT_SEQUENCE)
+    # inputs = IO_manager.load_finished_input_sequence(dirs.TEST_INPUT_SEQUENCE)
+    # n = len(game_states) - 1
+    check_frames = range(1, 7663)
+    car1_boost_amount = slice(58, 59)
+    car1_boost_input = slice(91, 92)
+    car2_boost_amount = slice(79, 80)
+    car2_boost_input = slice(99, 100)
+    boostpad = slice(9, 43)
+    sequences = [sequences_slow,
+                 sequences_slow_capped,
+                 sequences_fast,
+                 sequences_fast_capped]
+    for s in sequences:
+        print(
+            "i \t| frame \t| blue_car_boost_amount \t| blue_car_boost_input \t| orange_car_boost_amount \t| orange_car_boost_input \t|")
+        for i in range(16):
+            initial_pad_state = s[i][0][boostpad]
+            for f in check_frames:
+                if len(s[i]) > f:
+                    boost_collected1 = s[i][f][car1_boost_amount] - s[i][f - 1][car1_boost_amount] > 0
+                    boost_collected2 = s[i][f][car2_boost_amount] - s[i][f - 1][car2_boost_amount] > 0
+                    pad_collected = np.any(s[i][f][boostpad] - s[i][f - 1][boostpad] == -1)
+                    if pad_collected or boost_collected2 or boost_collected1:
+                        printe = False
+                        string = str(i) + "\t| " + str(f)
+                        string = string + "\t| " + str(s[i][f][car1_boost_amount])
+                        string = string + "\t| " + str(s[i][f][car2_boost_amount])
+                        if boost_collected1 and not pad_collected:
+                            printe = True
+                            string = string + "\t| car1 collected falsely"
+                        if boost_collected2 and not pad_collected:
+                            printe = True
+                            string = string + "\t| car2 collected falsely"
+                        if pad_collected and not (boost_collected1 or boost_collected2):
+                            printe = True
+                            string = string + "\t| pad collected falsely"
+                        if printe:
+                            print(string)
 
 
 def get_time():
@@ -162,11 +252,11 @@ def main():
                 break
         if remove:
             input_files.remove(f)
-    run(input_files)
+    execute_all_inputs(input_files)
     end_time = get_time()
     print("============ Done converting! ===========")
     print("Started at " + start_time + " and ended at " + end_time)
 
 
 if __name__ == '__main__':
-    main()
+    test_boost()
