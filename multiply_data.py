@@ -153,7 +153,7 @@ def main():
     dirs = Directories()
     files = os.listdir(dirs.FINISHED_INPUT_DIR)
     multiply_all(files)
-
+    print("done")
 
 if __name__ == '__main__':
     main()
