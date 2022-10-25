@@ -14,6 +14,7 @@ class Directories:
         self.UNFINISHED_INPUT_DIR = self.BASE_DIR + "/UnalteredInputSequences"
         self.FINISHED_INPUT_DIR = self.BASE_DIR + "/InterpolatedInputSequences"
         self.GAME_STATE_DIR = self.BASE_DIR + "/GameTickPackets"
+        self.NEW_GAME_STATE_DIR = self.BASE_DIR + "/GameStates"
         self.TEST_REPLAY_NAME = "test2"
         self.TEST_REPLAY = self.TEST_REPLAY_NAME + ".replay"
         self.TEST_INTERPOLATOR = ConstantSplit(1).to_string()

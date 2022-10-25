@@ -13,7 +13,7 @@ from observation_builder_1v1 import ObservationBuilder1v1
 from spawn_setter import SpawnSetter
 
 
-def execute_input_sequences(input_sequence_file_names: list, save_immediately=False, keep_saved_data_active=False):
+def execute_input_sequences(input_sequence_file_names: list, save_immediately=False, keep_saved_data_active=False, waiting_frames=0, follow_up_frames=0):
     spawn_setter = SpawnSetter()
     env = rlgym.make(tick_skip=1,
                      team_size=1,
@@ -28,7 +28,7 @@ def execute_input_sequences(input_sequence_file_names: list, save_immediately=Fa
     for i in range(len(input_sequence_file_names)):
         input_sequence = IO_manager.load_finished_input_sequence(input_sequence_file_names[i])
         print("Executing sequence " + str(i + 1) + "/" + str(len(input_sequence_file_names)))
-        game_states = execute_input_sequence(input_sequence, env, spawn_setter)
+        game_states = execute_input_sequence(input_sequence, env, spawn_setter, waiting_frames, follow_up_frames)
         if save_immediately:
             IO_manager.save_game_state_sequence(game_states, input_sequence_file_names[i])
             if keep_saved_data_active:
@@ -39,14 +39,12 @@ def execute_input_sequences(input_sequence_file_names: list, save_immediately=Fa
     return game_states_sequences
 
 
-def execute_input_sequence(input_sequence, env, state_setter):
+def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, follow_up_frames=0):
     controls = ["throttle", "steer", "pitch", "yaw", "roll", "jump", "boost", "handbrake"]
     state_setter.inject_new_spawn_info(input_sequence)
     obs = env.reset()
     frames = input_sequence["frames"]
     frame_count = len(frames)
-    follow_up_frames = 0
-    waiting_frames = 1200
     # print("Input sequence with " + str(frame_count) + " frames.")
     prev_obs = obs[0][:85]
     game_states = []
@@ -220,7 +218,6 @@ def test_boost():
                             string = string + "\t| pad collected falsely"
                         if printe:
                             print(string)
-
 
 def get_time():
     now = datetime.now()
