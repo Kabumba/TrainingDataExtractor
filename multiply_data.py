@@ -1,11 +1,7 @@
-import os
 import numpy as np
 
-import IO_manager
-from IO_manager import Directories
 
-
-def mirror_states(game_state_sequence):
+def mirror_old_states(game_state_sequence):
     """
     Spiegelung an der Längslinie von Tor zu Tor
     :param game_state_sequence:
@@ -89,7 +85,7 @@ def mirror_states(game_state_sequence):
     return inverted_states
 
 
-def invert_states(game_state_sequence):
+def invert_old_states(game_state_sequence):
     '''
     Punktspiegelung (vertauschen von teams)
     :param game_state_sequence:
@@ -129,15 +125,15 @@ def invert_states(game_state_sequence):
     return inverted_states
 
 
-def invert_and_mirror_states(game_state_sequence):
+def invert_and_mirror_old_states(game_state_sequence):
     """
     Spiegelung an der Mittelinie
     :param game_state_sequence:
     :return:
     """
-    return invert_states(mirror_states(game_state_sequence))
+    return invert_old_states(mirror_old_states(game_state_sequence))
 
-
+"""
 def multiply_all(files, invert=True, mirror=True, both=True):
     for file in files:
         s = IO_manager.load_game_state_sequence(file)
@@ -157,3 +153,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+"""

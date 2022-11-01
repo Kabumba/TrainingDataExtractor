@@ -4,10 +4,12 @@ import random
 
 import numpy as np
 import rlgym
+import torch
 from rlgym.utils.obs_builders import DefaultObs
 from rlgym.utils.terminal_conditions import common_conditions
 
 import IO_manager
+from enhance_data import DataEnhancer
 from interpolation_manager import ConstantSplit, Randomizer, DirectedRandomizer, SmoothSteps, GaussSteps, Interpolator
 from observation_builder_1v1 import ObservationBuilder1v1
 from spawn_setter import SpawnSetter
@@ -47,7 +49,8 @@ def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, 
     frame_count = len(frames)
     # print("Input sequence with " + str(frame_count) + " frames.")
     prev_obs = obs[0][:85]
-    game_states = []
+    game_states = torch.zeros(frame_count, 101)
+    de = DataEnhancer()
     interrupted = False
     for i in range(waiting_frames):
         new_obs, _, done, _ = env.step(np.zeros((16,)))
@@ -61,13 +64,13 @@ def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, 
         new_obs, _, done, _ = env.step(actions)
 
         prev_obs = np.concatenate([prev_obs, new_obs[0][85:93], new_obs[1][85:93]])
-        game_states.append(prev_obs)
+        de.enhance_new_obs(game_states, j, prev_obs)
         prev_obs = new_obs[0][:85]
         if done:
             # print("Goal in frame " + str(j + 1) + "/" + str(frame_count))
             interrupted = True
             break
-    game_states.append(prev_obs)
+    de.enhance_new_obs(game_states, frame_count-1, prev_obs)
     if not interrupted and follow_up_frames > 0:
         print("No goal, continue for " + str(follow_up_frames) + " frames")
         for i in range(follow_up_frames):

@@ -8,7 +8,7 @@ from rlgym.utils.obs_builders import ObsBuilder
 
 
 class ObservationBuilder1v1(ObsBuilder):
-    def __init__(self, pos_coef=1/2300, ang_coef=1/math.pi, lin_vel_coef=1/2300, ang_vel_coef=1/math.pi):
+    def __init__(self, pos_coef=1 / 2300, ang_coef=1 / math.pi, lin_vel_coef=1 / 2300, ang_vel_coef=1 / math.pi):
         """
         :param pos_coef: Position normalization coefficient
         :param ang_coef: Rotation angle normalization coefficient
@@ -26,7 +26,7 @@ class ObservationBuilder1v1(ObsBuilder):
 
     def build_obs(self, player: PlayerData, state: GameState, previous_action: np.ndarray) -> Any:
         ball = state.ball
-        pads = state.boost_pads
+        # pads = state.boost_pads
         obs = [ball.position * self.POS_COEF,
                ball.linear_velocity * self.LIN_VEL_COEF,
                ball.angular_velocity * self.ANG_VEL_COEF]

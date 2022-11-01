@@ -2,8 +2,10 @@ import bz2
 import pickle
 import shutil
 
-from interpolation_manager import *
-from multiply_data import invert_states, invert_and_mirror_states, mirror_states
+import torch
+
+import interpolation_manager
+#from multiply_data import invert_states, invert_and_mirror_states, mirror_states
 
 
 class Directories:
@@ -13,11 +15,11 @@ class Directories:
         self.CORRUPTED_REPLAY_DIR = self.BASE_DIR + "/CorruptedReplays"
         self.UNFINISHED_INPUT_DIR = self.BASE_DIR + "/UnalteredInputSequences"
         self.FINISHED_INPUT_DIR = self.BASE_DIR + "/InterpolatedInputSequences"
-        self.GAME_STATE_DIR = self.BASE_DIR + "/GameTickPackets"
-        self.NEW_GAME_STATE_DIR = self.BASE_DIR + "/GameStates"
+        self.OLD_GAME_STATE_DIR = self.BASE_DIR + "/GameTickPackets"
+        self.GAME_STATE_DIR = self.BASE_DIR + "/GameStates"
         self.TEST_REPLAY_NAME = "test2"
         self.TEST_REPLAY = self.TEST_REPLAY_NAME + ".replay"
-        self.TEST_INTERPOLATOR = ConstantSplit(1).to_string()
+        self.TEST_INTERPOLATOR = interpolation_manager.ConstantSplit(1).to_string()
         self.TEST_INPUT_SEQUENCE = self.TEST_INTERPOLATOR + self.TEST_REPLAY_NAME + "_0.pbz2"
 
 
@@ -31,17 +33,10 @@ def save_input_sequence(input_sequence, output_path):
         pickle.dump(input_sequence, f)
 
 
-def save_game_state_sequence(game_state_sequence, sequence_file_name, invert=False, mirror=False, both=False):
+def save_game_state_sequence(game_state_sequence, sequence_file_name):
     dirs = Directories()
     path = dirs.GAME_STATE_DIR + "/"
-    save_input_sequence(game_state_sequence, path + sequence_file_name)
-    if invert:
-        save_input_sequence(invert_states(game_state_sequence), path + "(Inverted)" + sequence_file_name)
-    if mirror:
-        save_input_sequence(mirror_states(game_state_sequence), path + "(Mirrored)" + sequence_file_name)
-    if both:
-        save_input_sequence(invert_and_mirror_states(game_state_sequence),
-                            path + "(Inverted,Mirrored)" + sequence_file_name)
+    torch.save(game_state_sequence, path + sequence_file_name)
 
 
 def load_game_state_sequence(sequence_file):
