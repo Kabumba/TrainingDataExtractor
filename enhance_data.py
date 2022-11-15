@@ -14,8 +14,8 @@ class DataEnhancer:
         self.n_features = 101
         self.long_time_frames = 240
         self.long_time = self.long_time_frames * self.normalize_coef
-        self.pos_coef = 1.0 / 2300.0
-        self.ang_coef = 1.0 / math.pi
+        self.old_pos_coef = 1.0 / 2300.0
+        self.old_ang_coef = 1.0 / math.pi
 
     # assumes already normalized pos and vel, als well as no boostpads in obs
     def enhance_new_obs(self, tensor, i, obs):
@@ -35,14 +35,28 @@ class DataEnhancer:
             enhanced_states[i, 47:68] = torch.from_numpy(game_state_sequence[i][64:85])  # car2
             if game_state_sequence[i].shape[0] > 85:
                 enhanced_states[i, 85:] = torch.from_numpy(game_state_sequence[i][85:])  # inputs
-            enhanced_states[i, 9:12].mul_(self.pos_coef)
-            enhanced_states[i, 18:21].mul_(self.pos_coef)
-            enhanced_states[i, 21:24].mul_(self.ang_coef)
-            enhanced_states[i, 47:50].mul_(self.pos_coef)
-            enhanced_states[i, 56:59].mul_(self.pos_coef)
-            enhanced_states[i, 59:62].mul_(self.ang_coef)
+            enhanced_states[i, 9:12].mul_(self.old_pos_coef)
+            enhanced_states[i, 18:21].mul_(self.old_pos_coef)
+            enhanced_states[i, 21:24].mul_(self.old_ang_coef)
+            enhanced_states[i, 47:50].mul_(self.old_pos_coef)
+            enhanced_states[i, 56:59].mul_(self.old_pos_coef)
+            enhanced_states[i, 59:62].mul_(self.old_ang_coef)
             self.add_time_info(enhanced_states, i)
         return enhanced_states
+
+    def remove_normalization(self, tensor):
+        tensor[:, 0:3].div_(self.old_pos_coef)
+        tensor[:, 3:6].div_(self.old_pos_coef)
+        tensor[:, 6:9].div_(self.old_ang_coef)
+
+        tensor[:, 9:12].div_(self.old_pos_coef)
+        tensor[:, 18:21].div_(self.old_pos_coef)
+        tensor[:, 21:24].div_(self.old_ang_coef)
+
+        tensor[:, 47:50].div_(self.old_pos_coef)
+        tensor[:, 56:59].div_(self.old_pos_coef)
+        tensor[:, 59:62].div_(self.old_ang_coef)
+        return tensor
 
     def add_time_info(self, tensor, i):
         for x in range(2):
@@ -66,8 +80,10 @@ class DataEnhancer:
                 tensor[i, 31 + o] = self.bool_frames(tensor, i, 28 + o, 31 + o)  # has_flip
                 tensor[i, 32 + o] = self.bool_frames(tensor, i, 29 + o, 32 + o)  # is_demoed
                 tensor[i, 33 + o] = self.bool_frames(tensor, i, 90 + oi, 33 + o)  # jump input
-                tensor[i, 34 + o] = self.frames_last_jump(tensor, i, 34 + o, 27 + o, 25 + o, 90 + oi, 33 + o)  # last jump
-                tensor[i, 35 + o] = self.frames_last_jump(tensor, i, 35 + o, 28 + o, 25 + o, 90 + oi, 33 + o)  # last flip
+                tensor[i, 34 + o] = self.frames_last_jump(tensor, i, 34 + o, 27 + o, 25 + o, 90 + oi,
+                                                          33 + o)  # last jump
+                tensor[i, 35 + o] = self.frames_last_flip(tensor, i, 35 + o, 28 + o, 25 + o, 90 + oi,
+                                                          33 + o)  # last flip
                 if tensor[i, 35 + o] == 0.0:
                     #  forward, up, lin_vel
                     tensor[i, (36 + o): (45 + o)] = tensor[i, (12 + o): (21 + o)]
@@ -124,8 +140,25 @@ class DataEnhancer:
         dirs = Directories()
         torch.save(tensor.clone(), dirs.NEW_GAME_STATE_DIR + "/" + base_name + ".pt")
 
+    def enhance_new_old_file(self, file_name):
+        base_name = os.path.splitext(os.path.basename(file_name))[0]
+        dirs = Directories()
+        if base_name + ".pt" in os.listdir(dirs.GAME_STATE_DIR):
+            return
+        tensor = torch.load(os.path.join(dirs.OLD_GAME_STATE_DIR, file_name))
+        print("Enhancing " + file_name)
+        try:
+            new_tensor = self.remove_normalization(tensor)
+            for i in range(new_tensor.shape[0]):
+                self.add_time_info(new_tensor, i)
+        except Exception as e:
+            print(e)
+            return
+        dirs = Directories()
+        torch.save(new_tensor.clone(), dirs.GAME_STATE_DIR + "/" + base_name + ".pt")
+
     def __call__(self, file_name):
-        self.enhance_file(file_name)
+        self.enhance_new_old_file(file_name)
 
 
 def enhance_all_old_files():
@@ -139,8 +172,23 @@ def enhance_all_old_files():
     print("Started at " + start_time + " and ended at " + end_time)
 
 
+def inspect_values():
+    dirs = IO_manager.Directories()
+    files = os.listdir(dirs.GAME_STATE_DIR)
+    print(len(files))
+    tensor = torch.load(os.path.join(dirs.GAME_STATE_DIR, files[0]))
+    for i in range(tensor.shape[0]):
+        # print(f'has_jump: {tensor[i, 27]} has_flip: {tensor[i, 28]} frames_last_jump: {tensor[i, 34]} frames_last_flip: {tensor[i, 35]} lin_vel_at_last_flip: {tensor[i, 42:45]}')
+        # print(f'is_demo: {tensor[i, 29]} frames_is_demo: {tensor[i, 32]}')
+        # print(f'jump: {tensor[i, 90]} frames_jump: {tensor[i, 33]}')
+        # print(f'has_jump: {tensor[i, 27]} frames_has_jump: {tensor[i, 30]}')
+        # print(f'on_ground: {tensor[i, 25]} has_jump: {tensor[i, 27]} has_flip: {tensor[i, 28]} jump {tensor[i, 90]}')
+        print(f'pos: {tensor[i, 9:12]} vel: {tensor[i, 18:21]} ang_vel: {tensor[i, 21:24]}')
+    print("done")
+
+
 def main():
-    enhance_all_old_files()
+    inspect_values()
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ from rlgym.utils.obs_builders import ObsBuilder
 
 
 class ObservationBuilder1v1(ObsBuilder):
-    def __init__(self, pos_coef=1 / 2300, ang_coef=1 / math.pi, lin_vel_coef=1 / 2300, ang_vel_coef=1 / math.pi):
+    def __init__(self, pos_coef=1, ang_coef=1, lin_vel_coef=1, ang_vel_coef=1):
         """
         :param pos_coef: Position normalization coefficient
         :param ang_coef: Rotation angle normalization coefficient
