@@ -15,8 +15,8 @@ class Directories:
         self.CORRUPTED_REPLAY_DIR = self.BASE_DIR + "/CorruptedReplays"
         self.UNFINISHED_INPUT_DIR = self.BASE_DIR + "/UnalteredInputSequences"
         self.FINISHED_INPUT_DIR = self.BASE_DIR + "/InterpolatedInputSequences"
-        self.OLD_GAME_STATE_DIR = self.BASE_DIR + "/GameTickPackets"
-        self.GAME_STATE_DIR = self.BASE_DIR + "/GameStates"
+        self.OLD_GAME_STATE_DIR = self.BASE_DIR + "/GameStates"
+        self.GAME_STATE_DIR = self.BASE_DIR + "/GameTickPackets"
         self.TEST_REPLAY_NAME = "test2"
         self.TEST_REPLAY = self.TEST_REPLAY_NAME + ".replay"
         self.TEST_INTERPOLATOR = interpolation_manager.ConstantSplit(1).to_string()

@@ -230,20 +230,21 @@ def get_time():
 def main():
     interpolators = \
         [ConstantSplit(1),
-         # ConstantSplit(0.75),
-         # ConstantSplit(0.5),
-         # ConstantSplit(0),
+         ConstantSplit(0.75),
+         ConstantSplit(0.5),
+         ConstantSplit(0),
          Randomizer(),
-         # DirectedRandomizer(),
-         # GaussSteps(),
+         DirectedRandomizer(),
+         GaussSteps(),
          SmoothSteps(),
-         # Interpolator(),
+         Interpolator(),
          ]
     interpolator_strings = [x.to_string() for x in interpolators]
     print([x.to_string() for x in interpolators])
     dirs = IO_manager.Directories()
     input_files = os.listdir(dirs.FINISHED_INPUT_DIR)
     start_time = get_time()
+    print("Remove Interpolators")
     for f in input_files:
         remove = True
         for i in interpolator_strings:
@@ -252,6 +253,12 @@ def main():
                 break
         if remove:
             input_files.remove(f)
+    print("Remove existing files")
+    for f in input_files:
+        base_name = os.path.splitext(os.path.basename(f))[0]
+        if base_name + ".pt" in os.listdir(dirs.OLD_GAME_STATE_DIR):
+            input_files.remove(f)
+    print(f"Start executing {len(input_files)} sequences")
     execute_all_inputs(input_files)
     end_time = get_time()
     print("============ Done converting! ===========")
@@ -259,4 +266,4 @@ def main():
 
 
 if __name__ == '__main__':
-    test_boost()
+    main()
