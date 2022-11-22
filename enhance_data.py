@@ -20,9 +20,9 @@ class DataEnhancer:
     # assumes already normalized pos and vel, als well as no boostpads in obs
     def enhance_new_obs(self, tensor, i, obs):
         tensor[i, :30] = torch.from_numpy(obs[:30])
-        tensor[i, 47:68] = torch.from_numpy(obs[64:85])
-        if obs.shape[0] > 85:
-            tensor[i, 85:] = torch.from_numpy(obs[85:])
+        tensor[i, 47:68] = torch.from_numpy(obs[30:51])
+        if obs.shape[0] > 51:
+            tensor[i, 85:] = torch.from_numpy(obs[51:])
         self.add_time_info(tensor, i)
 
     # for all the files generated before the change of mind

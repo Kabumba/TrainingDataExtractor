@@ -32,7 +32,8 @@ def execute_input_sequences(input_sequence_file_names: list, save_immediately=Fa
         print("Executing sequence " + str(i + 1) + "/" + str(len(input_sequence_file_names)))
         game_states = execute_input_sequence(input_sequence, env, spawn_setter, waiting_frames, follow_up_frames)
         if save_immediately:
-            IO_manager.save_game_state_sequence(game_states, input_sequence_file_names[i])
+            base_name = os.path.splitext(os.path.basename(input_sequence_file_names[i]))[0]
+            IO_manager.save_game_state_sequence(game_states, base_name + ".pt")
             if keep_saved_data_active:
                 game_states_sequences.append(game_states)
         else:
@@ -48,7 +49,7 @@ def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, 
     frames = input_sequence["frames"]
     frame_count = len(frames)
     # print("Input sequence with " + str(frame_count) + " frames.")
-    prev_obs = obs[0][:85]
+    prev_obs = obs[0][:51]
     game_states = torch.zeros(frame_count, 101)
     de = DataEnhancer()
     interrupted = False
@@ -62,10 +63,9 @@ def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, 
         action2 = np.array([inputs2[c] for c in controls])
         actions = [action1, action2]
         new_obs, _, done, _ = env.step(actions)
-
-        prev_obs = np.concatenate([prev_obs, new_obs[0][85:93], new_obs[1][85:93]])
+        prev_obs = np.concatenate([prev_obs, new_obs[0][51:59], new_obs[1][51:59]])
         de.enhance_new_obs(game_states, j, prev_obs)
-        prev_obs = new_obs[0][:85]
+        prev_obs = new_obs[0][:51]
         if done:
             # print("Goal in frame " + str(j + 1) + "/" + str(frame_count))
             interrupted = True
@@ -244,7 +244,7 @@ def main():
     dirs = IO_manager.Directories()
     input_files = os.listdir(dirs.FINISHED_INPUT_DIR)
     start_time = get_time()
-    print("Remove Interpolators")
+    print(f"Remove Interpolators {len(input_files)} files")
     for f in input_files:
         remove = True
         for i in interpolator_strings:
@@ -253,10 +253,12 @@ def main():
                 break
         if remove:
             input_files.remove(f)
-    print("Remove existing files")
+    print(f"Remove existing files  {len(input_files)} files")
+    existing_files = os.listdir(dirs.OLD_GAME_STATE_DIR)
+    print(f"{len(existing_files)} files already there")
     for f in input_files:
         base_name = os.path.splitext(os.path.basename(f))[0]
-        if base_name + ".pt" in os.listdir(dirs.OLD_GAME_STATE_DIR):
+        if base_name + ".pt" in existing_files:
             input_files.remove(f)
     print(f"Start executing {len(input_files)} sequences")
     execute_all_inputs(input_files)
