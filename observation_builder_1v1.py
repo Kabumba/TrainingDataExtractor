@@ -24,7 +24,7 @@ class ObservationBuilder1v1(ObsBuilder):
     def reset(self, initial_state: GameState):
         pass
 
-    def build_obs(self, player: PlayerData, state: GameState, previous_action: np.ndarray) -> Any:
+    def build_obs(self, player: PlayerData, state: GameState, previous_action: np.ndarray = None) -> Any:
         ball = state.ball
         # pads = state.boost_pads
         obs = [ball.position * self.POS_COEF,
@@ -38,7 +38,8 @@ class ObservationBuilder1v1(ObsBuilder):
                 continue
             self._add_player_to_obs(cars, other, False)
         obs.extend(cars)
-        obs.append(previous_action)
+        if previous_action is not None:
+            obs.append(previous_action)
         return np.concatenate(obs)
 
     def _add_player_to_obs(self, obs: List, player: PlayerData, inverted: bool):

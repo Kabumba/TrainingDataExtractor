@@ -53,6 +53,7 @@ def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, 
     game_states = torch.zeros(frame_count, 101)
     de = DataEnhancer()
     interrupted = False
+    steps = frame_count
     for i in range(waiting_frames):
         new_obs, _, done, _ = env.step(np.zeros((16,)))
     for j in range(frame_count):
@@ -69,8 +70,10 @@ def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, 
         if done:
             # print("Goal in frame " + str(j + 1) + "/" + str(frame_count))
             interrupted = True
+            steps = j+1
             break
-    de.enhance_new_obs(game_states, frame_count-1, prev_obs)
+    if not interrupted:
+        de.enhance_new_obs(game_states, steps-1, prev_obs)
     if not interrupted and follow_up_frames > 0:
         print("No goal, continue for " + str(follow_up_frames) + " frames")
         for i in range(follow_up_frames):
@@ -81,6 +84,10 @@ def execute_input_sequence(input_sequence, env, state_setter, waiting_frames=0, 
                 break
         if not interrupted:
             print("Still no goal.")
+    if steps != frame_count:
+        new_game_states = torch.zeros(steps, 101)
+        new_game_states[:steps] = game_states[:steps]
+        return new_game_states
     return game_states
 
 
