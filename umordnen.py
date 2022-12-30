@@ -1,19 +1,44 @@
 import os
 import shutil
+
+import torch
+
 from IO_manager import Directories
 
+def remove_prefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix):]
 
-dirs = Directories()
-state_dir = dirs.BASE_DIR + "/Train"
-trash_dir = dirs.BASE_DIR + "/Unused"
-gs = os.listdir(state_dir)
-upsi_files = []
-for f in gs:
-    base_name = os.path.splitext(os.path.basename(f))[0]
-    if f.startswith("[GaussSteps"):
-        shutil.move(os.path.join(state_dir, f), os.path.join(trash_dir, f))
-    if f.startswith("[ConstantSplit,0."):
-        shutil.move(os.path.join(state_dir, f), os.path.join(trash_dir, f))
-    if f.startswith("[Interpolator"):
-        shutil.move(os.path.join(state_dir, f), os.path.join(trash_dir, f))
-print(f"done {len(upsi_files)}")
+def remove_suffix(string, suffix):
+    if string.endswith(suffix):
+        return string[:-len(suffix)]
+    return string
+
+cp_dir = "../Experimente/BaselineTest/Checkpoints"
+files = os.listdir(cp_dir)
+cphs = []
+dirs = []
+for f in files:
+    if f.endswith(".cph"):
+        cphs.append(f)
+    else:
+        dirs.append(f)
+print(cphs)
+cp_indices = []
+for f in cphs:
+    cp = remove_prefix(f, "cph_")
+    cp = remove_suffix(cp, ".cph")
+    cp_indices.append(int(cp))
+cp_indices.sort()
+print(dirs)
+for dir in dirs:
+    path = cp_dir + "/" + dir
+    cps = os.listdir(path)
+    for f in cps:
+        a = remove_suffix(f, ".cp")
+        remove = True
+        for i in cp_indices:
+            if a.endswith(str(i)):
+                remove = False
+        if remove:
+            os.remove(path + "/" + f)
+print("done")
