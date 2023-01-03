@@ -81,7 +81,8 @@ columns = 2
 rows = 3
 os = [[1, 7, 3, 13, 5, 15], [10, 11], [18, 20, 22, 24], [25, 0]]
 rc = [[3, 2], [1, 2], [2, 2], [1, 2]]
-plotnumber = 2
+letters = ["a)","b)","c)","d)","e)","f)"]
+plotnumber = 3
 figure, axis = plt.subplots(rc[plotnumber][0], rc[plotnumber][1])
 figure.set_size_inches(6.40, 2.4 * rc[plotnumber][0])
 
@@ -94,19 +95,9 @@ for i in range(rc[plotnumber][0] * rc[plotnumber][1]):
         plot = axis[math.floor(i / rc[plotnumber][1]), i % rc[plotnumber][1]]
     plot.plot(test_step_data[exp], test_data[exp], label="Test")
     plot.plot(train_step_data[exp], train_data[exp], label="Training")
-    title = exp[3:]
+    title = letters[i] + " " + exp[3:]
     plot.set_title(title)
     plot.legend()
-'''
-figure, axis = plt.subplots(1, 2)
-for i in range(2):
-    exp = exps[os[plotnumber][i]]
-    axis[i].plot(test_step_data[exp], test_data[exp], label="Test")
-    axis[i].plot(train_step_data[exp], train_data[exp], label="Training")
-    title = exp[3:]
-    axis[i].set_title(title)
-    axis[i].legend()
-'''
 # Combine all the operations and display
 figure.tight_layout()
 plt.show()

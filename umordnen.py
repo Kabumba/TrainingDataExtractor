@@ -13,32 +13,15 @@ def remove_suffix(string, suffix):
         return string[:-len(suffix)]
     return string
 
-cp_dir = "../Experimente/BaselineTest/Checkpoints"
-files = os.listdir(cp_dir)
-cphs = []
-dirs = []
+dir = "../Data/Test"
+files = os.listdir(dir)
+ball_touch_end = 0
 for f in files:
-    if f.endswith(".cph"):
-        cphs.append(f)
-    else:
-        dirs.append(f)
-print(cphs)
-cp_indices = []
-for f in cphs:
-    cp = remove_prefix(f, "cph_")
-    cp = remove_suffix(cp, ".cph")
-    cp_indices.append(int(cp))
-cp_indices.sort()
-print(dirs)
-for dir in dirs:
-    path = cp_dir + "/" + dir
-    cps = os.listdir(path)
-    for f in cps:
-        a = remove_suffix(f, ".cp")
-        remove = True
-        for i in cp_indices:
-            if a.endswith(str(i)):
-                remove = False
-        if remove:
-            os.remove(path + "/" + f)
+    tensor = torch.load(os.path.join(dir, f))
+    n = tensor.shape[0]-1
+    if tensor[n][26] == 1:
+        ball_touch_end +=1
+    if tensor[n][64] == 1:
+        ball_touch_end +=1
+print(f"ball touch last frame: {ball_touch_end}")
 print("done")
